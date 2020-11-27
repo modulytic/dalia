@@ -1,0 +1,21 @@
+plugins {
+    id 'application'
+}
+apply plugin : 'java'
+
+group 'com.modulytic'
+version '1.0-SNAPSHOT'
+
+application {
+    mainClassName = 'com.modulytic.dalia.Main'
+}
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    testCompile group: 'junit', name: 'junit', version: '4.12'
+
+    implementation fileTree(include: ['*.jar'], dir: 'libs')
+}
