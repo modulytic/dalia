@@ -21,7 +21,7 @@ dependencies {
 
     implementation 'org.slf4j:slf4j-simple:2.0.0-alpha1'
     implementation 'com.google.code.gson:gson:2.8.6'
-    implementation 'com.googlecode.libphonenumber:libphonenumber:7.0'
+    implementation 'com.googlecode.libphonenumber:libphonenumber:8.12.13'
     implementation 'mysql:mysql-connector-java:8.0.22'
     implementation 'org.java-websocket:Java-WebSocket:1.5.1'
 }
