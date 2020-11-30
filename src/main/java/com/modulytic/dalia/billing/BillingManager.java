@@ -1,15 +1,19 @@
 package com.modulytic.dalia.billing;
 
-import com.modulytic.dalia.local.MySqlDbManager;
+import com.modulytic.dalia.local.include.DbManager;
 
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
 
+/**
+ * Deal with saving and fetching billing data
+ * @author  <a href="mailto:noah@modulytic.com">Noah Sandman</a>
+ */
 public class BillingManager {
-    private final MySqlDbManager database;
-    public BillingManager(MySqlDbManager database) {
+    private final DbManager database;
+    public BillingManager(DbManager database) {
         this.database = database;
     }
 

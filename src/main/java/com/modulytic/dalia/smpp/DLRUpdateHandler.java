@@ -10,17 +10,35 @@ import org.slf4j.LoggerFactory;
 import java.sql.Timestamp;
 import java.util.*;
 
+/**
+ * Handles the receipt of new message statuses from {@link WsdServer WebSockets}
+ * @author <a href="mailto:noah@modulytic.com">Noah Sandman</a>
+ */
 public class DLRUpdateHandler {
     protected final Logger LOGGER = LoggerFactory.getLogger(WsdServer.class);
 
+    /**
+     * Active database connection
+     */
     private final MySqlDbManager database;
+
     private final DaliaSmppSessionListener listener;
     public DLRUpdateHandler(MySqlDbManager database, DaliaSmppSessionListener listener) {
         this.database = database;
         this.listener = listener;
     }
 
+    /**
+     * Set and send a new status for a message where DLRs were requested
+     * @param messageId message assigned when submit_sm was received
+     * @param status    new {@link MessageState status}
+     */
     public void updateStatus(String messageId, String status) {
+        if (!MessageState.isValid(status)) {
+            LOGGER.error(String.format("Received DLR update for message '%s', but new status '%s' is invalid", messageId, status));
+            return;
+        }
+
         try {
             updateStatusUnsafe(messageId, status);
         }
@@ -29,10 +47,13 @@ public class DLRUpdateHandler {
         }
     }
 
-    private void updateStatusUnsafe(String messageId, String status) {
-        if (!MessageState.isValid(status))
-            return;
-
+    /**
+     * Set and send a new status for a message where DLRs were requested
+     * @param messageId message assigned when submit_sm was received
+     * @param status    new {@link MessageState status}
+     * @throws NullPointerException if DLRs were not originally requested for messageId (or messageId never existed)
+     */
+    private void updateStatusUnsafe(String messageId, String status) throws NullPointerException {
         Map<String, String> match = new TreeMap<>();
         match.put("msg_id", messageId);
 
@@ -66,6 +87,5 @@ public class DLRUpdateHandler {
             // send to client
             bridge.sendPdu(deliveryReport.toDeliverSm());
         }
-
     }
 }

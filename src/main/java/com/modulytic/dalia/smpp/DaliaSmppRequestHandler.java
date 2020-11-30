@@ -5,11 +5,11 @@ import com.google.i18n.phonenumbers.PhoneNumberUtil;
 import com.google.i18n.phonenumbers.Phonenumber;
 import com.modulytic.dalia.billing.Vroute;
 import com.modulytic.dalia.billing.BillingManager;
-import com.modulytic.dalia.local.MySqlDbManager;
+import com.modulytic.dalia.local.include.DbManager;
 import com.modulytic.dalia.smpp.api.NPI;
 import com.modulytic.dalia.smpp.api.RegisteredDelivery;
 import com.modulytic.dalia.smpp.api.TON;
-import com.modulytic.dalia.smpp.include.SmppRequestRouter;
+import com.modulytic.dalia.smpp.include.SmppRequestHandler;
 import com.modulytic.dalia.ws.WsdServer;
 import com.modulytic.dalia.ws.api.WsdMessage;
 import net.gescobar.smppserver.Response;
@@ -21,18 +21,37 @@ import java.util.Map;
 import java.util.TreeMap;
 import java.util.UUID;
 
-public class DaliaSmppRequestRouter extends SmppRequestRouter {
-    private final MySqlDbManager database;
+/**
+ * Handle PDUs and distribute incoming SMSes
+ * @author  <a href="mailto:noah@modulytic.com">Noah Sandman</a>
+ */
+public class DaliaSmppRequestHandler extends SmppRequestHandler {
+    /**
+     * Active database connection
+     */
+    private final DbManager database;
+
+    /**
+     * {@link PhoneNumberUtil libphonenumber} instance so we can parse and format destination numbers
+     */
     private final PhoneNumberUtil phoneUtil;
     private WsdServer wsdServer;
 
-    public DaliaSmppRequestRouter(MySqlDbManager database) {
+    /**
+     * Constructor
+     * @param database  Active database connection
+     */
+    public DaliaSmppRequestHandler(DbManager database) {
         super();
 
         this.phoneUtil = PhoneNumberUtil.getInstance();
         this.database = database;
     }
 
+    /**
+     * Pass WebSocket server to request router so we can send client messages
+     * @param server    WebSocket server
+     */
     public void setWsdServer(WsdServer server) {
         this.wsdServer = server;
     }
@@ -43,9 +62,9 @@ public class DaliaSmppRequestRouter extends SmppRequestRouter {
 
     @Override
     public void onAuthFailure(String sysId) {
-
     }
 
+    // TODO split this up into methods much better than this
     @Override
     public Response onSubmitSm(SubmitSm submitSm) {
         Response response = Response.OK;
@@ -68,7 +87,7 @@ public class DaliaSmppRequestRouter extends SmppRequestRouter {
             if (npi != NPI.E164 && npi != NPI.NATIONAL)
                 return Response.INVALID_DESTINATION_NPI;
 
-            destNumber = this.phoneUtil.parse(destAddress.getAddress(), "US");
+            destNumber    = this.phoneUtil.parse(destAddress.getAddress(), "US");
             destFormatted = this.phoneUtil.format(destNumber, PhoneNumberUtil.PhoneNumberFormat.E164);
         } catch (NumberParseException e) {
             return Response.INVALID_DEST_ADDRESS;
@@ -78,7 +97,7 @@ public class DaliaSmppRequestRouter extends SmppRequestRouter {
         RegisteredDelivery registeredDelivery = new RegisteredDelivery(submitSm.getRegisteredDelivery());
         boolean shouldForwardDlrs = registeredDelivery.getForwardDlrs();
         if (shouldForwardDlrs) {
-            String srcAddr  = submitSm.getSourceAddress().getAddress();
+            String srcAddr = submitSm.getSourceAddress().getAddress();
 
             // reverse src and dst because these are the details for future DLRs
             Map<String, Object> values = new TreeMap<>();
@@ -126,6 +145,11 @@ public class DaliaSmppRequestRouter extends SmppRequestRouter {
         return Response.OK;
     }
 
+    /**
+     * If message is in DLR database, handle properly, otherwise generic_nack
+     * @param querySm   query_sm PDU
+     * @return          {@link Response SMPP response}
+     */
     @Override
     public Response onQuerySm(SmppRequest querySm) {
         return Response.OK;

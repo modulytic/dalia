@@ -1,6 +1,9 @@
 package com.modulytic.dalia.smpp.api;
 
-// https://docs.aerialink.net/api/smpp/ton-npi-settings/
+/**
+ * Possible values for SMPP <a href="https://docs.aerialink.net/api/smpp/ton-npi-settings/">TON</a>
+ * @author  <a href="mailto:noah@modulytic.com">Noah Sandman</a>
+ */
 @SuppressWarnings("unused")
 public class TON {
     public static byte UNKNOWN = 0;

@@ -9,6 +9,10 @@ import com.modulytic.dalia.ws.WsdServer;
 import com.modulytic.dalia.ws.WsdServerThread;
 import net.gescobar.smppserver.SmppServer;
 
+/**
+ * Main class, entrypoint into program
+ * @author  <a href="mailto:noah@modulytic.com">Noah Sandman</a>
+ */
 public class Main {
     public static void main(String[] args) {
         // MySQL database

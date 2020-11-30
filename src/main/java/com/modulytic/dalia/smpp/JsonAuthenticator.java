@@ -11,10 +11,30 @@ import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.HashMap;
 
+/**
+ * Authenticator that takes JSON as its database of accounts
+ * <p>
+ *     JSON should be in the following format:
+ *     {
+ *         "user1": "pass1",
+ *         "user2": "pass2"
+ *     }
+ *
+ *     ...and so on
+ * </p>
+ * @author  <a href="mailto:noah@modulytic.com">Noah Sandman</a>
+ */
 public class JsonAuthenticator extends SmppAuthenticator {
-    // <username, password>
+    /**
+     * HashMap of credentials, stored in format (K, V): (username, password)
+     */
     final private HashMap<String, String> credentials;
 
+    /**
+     * Read text from JSON file, parse with Gson, and call HashMap constructor
+     * @param filePath  path to valid JSON data
+     * @return          HashMap that can be accepted by {@link #JsonAuthenticator(HashMap)}
+     */
     private static HashMap<String, String> pathToCredentialsMap(String filePath) {
         try {
             String content = new String(Files.readAllBytes(Paths.get(filePath)));
@@ -28,10 +48,18 @@ public class JsonAuthenticator extends SmppAuthenticator {
         return null;
     }
 
+    /**
+     * Constructor
+     * @param filePath  path to a JSON file
+     */
     public JsonAuthenticator(String filePath) {
         this(pathToCredentialsMap(filePath));
     }
 
+    /**
+     * Constructor
+     * @param credentialMap Parsed JSON data
+     */
     public JsonAuthenticator(HashMap<String, String> credentialMap) {
         super();
         this.credentials = credentialMap;
