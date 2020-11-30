@@ -1,0 +1,28 @@
+version: '3.3'
+
+services:
+  db:
+    image: mariadb:10.5
+    volumes:
+      - ./sql:/docker-entrypoint-initdb.d
+    restart: always
+    environment:
+      MYSQL_DATABASE: dalia
+      MYSQL_USER: dalia
+      MYSQL_PASSWORD: password
+      MYSQL_ROOT_PASSWORD: root
+
+  dalia:
+    build: .
+    depends_on:
+      - db
+    ports:
+      - "2775:2775"
+      - "3000:3000"
+    restart: always
+    environment:
+      DALIA_DB_HOST: db
+      DALIA_PREFIX: /app/prefix
+
+volumes:
+  db_data: {}

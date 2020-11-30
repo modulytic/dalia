@@ -11,33 +11,37 @@ public abstract class SmppRequestRouter {
     private final DaliaSmppSessionListener listener;
     private final SmppAuthenticator auth;
 
-    protected final Logger log = LoggerFactory.getLogger(SmppRequestRouter.class);
+    protected String smppUser;
+    protected final Logger LOGGER = LoggerFactory.getLogger(SmppRequestRouter.class);
 
     public SmppRequestRouter(SmppAuthenticator authenticator, DaliaSmppSessionListener listener) {
         this.auth = authenticator;
         this.listener = listener;
     }
 
-    public void route(SmppRequest req, ResponseSender res) {
+    public void onSmppRequest(SmppRequest req, ResponseSender res) {
         final Response response;
 
         if (req.isBind()) {
-            response = this.handleBind((Bind)req);
+            response = this.onBind((Bind)req);
         }
         else if (req.getCommandId() == SmppPacket.ENQUIRE_LINK) {
-            response = this.handleEnquireLink();
+            response = this.onEnquireLink();
         }
         else if (req.isSubmitSm()) {
-            response = this.handleSubmitSm((SubmitSm)req);
+            response = this.onSubmitSm((SubmitSm)req);
         }
         else if (req.getCommandId() == SmppPacket.CANCEL_SM) {
-            response = this.handleCancelSm(req);
+            response = this.onCancelSm(req);
         }
         else if (req.getCommandId() == SmppPacket.QUERY_SM) {
-            response = this.handleQuerySm(req);
+            response = this.onQuerySm(req);
         }
         else if (req.getCommandId() == SmppPacket.REPLACE_SM) {
-            response = this.handleReplaceSm(req);
+            response = this.onReplaceSm(req);
+        }
+        else if (req.getCommandId() == SmppPacket.SUBMIT_MULTI) {
+            response = this.onSubmitMulti(req);
         }
         else {
             response = Response.INVALID_COMMAND_ID;
@@ -48,32 +52,34 @@ public abstract class SmppRequestRouter {
         }
     }
 
-    private Response handleBind(Bind bind) {
+    private Response onBind(Bind bind) {
         final String systemId = bind.getSystemId();
+        this.smppUser = systemId;
 
         boolean authenticated = this.auth.auth(systemId, bind.getPassword());
         if (authenticated) {
             // let the rest of the system know we are successfully bound
             this.listener.activateSession(systemId);
 
-            handleAuthSuccess(systemId);
+            onAuthSuccess(systemId);
             return Response.OK;
         }
         else {
-            handleAuthFailure(systemId);
+            onAuthFailure(systemId);
             return Response.BIND_FAILED;
         }
     }
 
-    private Response handleEnquireLink() {
+    private Response onEnquireLink() {
         return Response.OK;
     }
 
-    public abstract void handleAuthSuccess(String sysId);
-    public abstract void handleAuthFailure(String sysId);
+    public abstract void onAuthSuccess(String sysId);
+    public abstract void onAuthFailure(String sysId);
 
-    public abstract Response handleSubmitSm(SubmitSm submitSm);
-    public abstract Response handleCancelSm(SmppRequest cancelSm);
-    public abstract Response handleQuerySm(SmppRequest querySm);
-    public abstract Response handleReplaceSm(SmppRequest replaceSm);
+    public abstract Response onSubmitSm(SubmitSm submitSm);
+    public abstract Response onCancelSm(SmppRequest cancelSm);
+    public abstract Response onQuerySm(SmppRequest querySm);
+    public abstract Response onReplaceSm(SmppRequest replaceSm);
+    public abstract Response onSubmitMulti(SmppRequest submitMulti);
 }

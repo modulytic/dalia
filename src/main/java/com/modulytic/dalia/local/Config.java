@@ -6,7 +6,7 @@ import java.io.File;
 
 public class Config {
     public static String getPrefix() {
-        String prefix = System.getenv(Constants.PREFIX_ENV);
+        String prefix = System.getenv(Constants.ENV_PREFIX);
         if (prefix == null)
             prefix = Constants.PREFIX_FALLBACK;
 

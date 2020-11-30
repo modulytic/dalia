@@ -11,15 +11,19 @@ import java.util.Map;
 // Store active connections in a hashmap so we can access them quickly
 public class DaliaSmppSessionListener implements SmppSessionListener {
     final private Map<String, SmppSession> boundSessions;
+    final private Map<String, DaliaSessionBridge> bridges;
+
     final private List<SmppSession> pendingSessions;
 
     public DaliaSmppSessionListener() {
         this.boundSessions = new HashMap<>();
+        this.bridges = new HashMap<>();
+
         this.pendingSessions = new ArrayList<>();
     }
 
-    public SmppSession getSession(String systemId) {
-        return this.boundSessions.get(systemId);
+    public DaliaSessionBridge getSessionBridge(String systemId) {
+        return this.bridges.get(systemId);
     }
 
     @Override
@@ -33,6 +37,7 @@ public class DaliaSmppSessionListener implements SmppSessionListener {
             if (session.isBound() && session.getSystemId().equals(systemId)) {
                 this.pendingSessions.remove(session);
                 this.boundSessions.put(systemId, session);
+                this.bridges.put(systemId, new DaliaSessionBridge(session));
 
                 break;
             }
@@ -42,7 +47,9 @@ public class DaliaSmppSessionListener implements SmppSessionListener {
     @Override
     public void destroyed(SmppSession smppSession) {
         if (smppSession.isBound()) {
-            this.boundSessions.remove(smppSession.getSystemId());
+            String systemId = smppSession.getSystemId();
+            this.boundSessions.remove(systemId);
+            this.bridges.remove(systemId);
         }
         else {
             this.pendingSessions.remove(smppSession);
