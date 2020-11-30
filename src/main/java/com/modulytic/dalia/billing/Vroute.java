@@ -11,8 +11,8 @@ public class Vroute {
     private final float rate;
     private final int countryCode;
 
-    public Vroute(Map<String, ?> vals) {
-        this((Integer) vals.get("id"), (String) vals.get("vroute_name"), (Float) vals.get("rate"), (Integer) vals.get("country_code"));
+    public Vroute(Map<String, ?> rs) {
+        this((Integer) rs.get("id"), (String) rs.get("vroute_name"), (Float) rs.get("rate"), (Integer) rs.get("country_code"));
     }
 
     public Vroute(int id, String name, float rate, int countryCode) {

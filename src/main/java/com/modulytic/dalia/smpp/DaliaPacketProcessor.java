@@ -12,7 +12,7 @@ public class DaliaPacketProcessor implements PacketProcessor {
     private final DaliaSmppRequestRouter router;
     public DaliaPacketProcessor(DaliaSmppSessionListener listener, MySqlDbManager database) {
         String confPath = Config.getPrefixFile(Constants.SMPP_CONF_FILENAME);
-        DaliaJsonAuthenticator authenticator = new DaliaJsonAuthenticator(confPath);
+        JsonAuthenticator authenticator = new JsonAuthenticator(confPath);
 
         this.router = new DaliaSmppRequestRouter(authenticator, listener, database);
     }
