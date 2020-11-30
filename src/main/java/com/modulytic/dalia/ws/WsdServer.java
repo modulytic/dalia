@@ -80,9 +80,10 @@ public class WsdServer extends WebSocketServer {
 
         try {
             // actually do the sending
+            // TODO read the status back and return it
             WebSocket current = activeConnections.get(activeIndex);
             current.send(message.toString());
-            LOGGER.info("Successfully sent message to client");
+            LOGGER.info(String.format("Successfully sent message to client[%d]", activeIndex));
 
             return true;
         }

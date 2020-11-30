@@ -1,4 +1,4 @@
-# dalia
+# Dalia
 
 Dalia is an SMSC written in Java that distributes messages to [endpoints](https://github.com/modulytic/termination-endpoint). It replaces the old Modulytic SMSC, based on [Jasmin](https://github.com/jookies/jasmin), archived [here](https://github.com/modulytic/termination-proxy).
 

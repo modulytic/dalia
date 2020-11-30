@@ -3,6 +3,7 @@ package com.modulytic.dalia.smpp;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 import com.modulytic.dalia.smpp.include.SmppAuthenticator;
+import net.gescobar.smppserver.Response;
 
 import java.io.IOException;
 import java.lang.reflect.Type;
@@ -37,11 +38,19 @@ public class JsonAuthenticator extends SmppAuthenticator {
     }
 
     @Override
-    public boolean auth(String username, String password) {
+    public Response auth(String username, String password) {
         if (username == null || password == null)
-            return false;
+            return Response.MISSING_EXPECTED_PARAMETER;
 
         String correctPassword = this.credentials.get(username);
-        return password.equals(correctPassword);
+        if (correctPassword == null)
+            return Response.INVALID_SYSTEM_ID;
+
+        if (password.equals(correctPassword)) {
+            return Response.OK;
+        }
+        else {
+            return Response.INVALID_PASSWORD;
+        }
     }
 }

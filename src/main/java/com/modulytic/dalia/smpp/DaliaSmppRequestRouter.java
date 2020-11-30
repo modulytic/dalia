@@ -9,7 +9,6 @@ import com.modulytic.dalia.local.MySqlDbManager;
 import com.modulytic.dalia.smpp.api.NPI;
 import com.modulytic.dalia.smpp.api.RegisteredDelivery;
 import com.modulytic.dalia.smpp.api.TON;
-import com.modulytic.dalia.smpp.include.SmppAuthenticator;
 import com.modulytic.dalia.smpp.include.SmppRequestRouter;
 import com.modulytic.dalia.ws.WsdServer;
 import com.modulytic.dalia.ws.api.WsdMessage;
@@ -27,10 +26,8 @@ public class DaliaSmppRequestRouter extends SmppRequestRouter {
     private final PhoneNumberUtil phoneUtil;
     private WsdServer wsdServer;
 
-    public DaliaSmppRequestRouter(SmppAuthenticator authenticator,
-                                  DaliaSmppSessionListener listener,
-                                  MySqlDbManager database) {
-        super(authenticator, listener);
+    public DaliaSmppRequestRouter(MySqlDbManager database) {
+        super();
 
         this.phoneUtil = PhoneNumberUtil.getInstance();
         this.database = database;
@@ -114,8 +111,12 @@ public class DaliaSmppRequestRouter extends SmppRequestRouter {
         // TODO check status returned and fail if needed
         WsdMessage sendMessage = new WsdMessage("send.php", sendParams);
         boolean sendSuccess = wsdServer.sendNext(sendMessage);
+
+        // no clients are available to take the message
         if (!sendSuccess)
             return Response.SYSTEM_ERROR;
+
+        // TODO if intermediate DLRs requested, send accepted/en_route
 
         return response;
     }

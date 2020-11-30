@@ -8,28 +8,41 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 public abstract class SmppRequestRouter {
-    private final DaliaSmppSessionListener listener;
-    private final SmppAuthenticator auth;
+    private DaliaSmppSessionListener listener = null;
+    private SmppAuthenticator auth = null;
 
     protected String smppUser;
     protected final Logger LOGGER = LoggerFactory.getLogger(SmppRequestRouter.class);
 
-    public SmppRequestRouter(SmppAuthenticator authenticator, DaliaSmppSessionListener listener) {
-        this.auth = authenticator;
+    public void setListener(DaliaSmppSessionListener listener) {
         this.listener = listener;
     }
 
+    public void setAuthenticator(SmppAuthenticator authenticator) {
+        this.auth = authenticator;
+    }
+
     public void onSmppRequest(SmppRequest req, ResponseSender res) {
+        // make sure listener is defined
+        if (this.listener == null) {
+            LOGGER.error("Fatal error: No listener specified in request router!!!");
+            res.send(Response.SYSTEM_ERROR);
+            return;
+        }
+
         final Response response;
 
         if (req.isBind()) {
-            response = this.onBind((Bind)req);
+            response = this.onBind((Bind) req);
+        }
+        else if (req.getCommandId() == SmppPacket.UNBIND) {
+            response = this.onUnBind();
         }
         else if (req.getCommandId() == SmppPacket.ENQUIRE_LINK) {
             response = this.onEnquireLink();
         }
         else if (req.isSubmitSm()) {
-            response = this.onSubmitSm((SubmitSm)req);
+            response = this.onSubmitSm((SubmitSm) req);
         }
         else if (req.getCommandId() == SmppPacket.CANCEL_SM) {
             response = this.onCancelSm(req);
@@ -53,23 +66,37 @@ public abstract class SmppRequestRouter {
     }
 
     private Response onBind(Bind bind) {
+        // if no authenticator, always fail
+        if (this.auth == null) {
+            LOGGER.error("Cannot authenticate user: no authenticator defined in request router!!!");
+            return Response.BIND_FAILED;
+        }
+
         final String systemId = bind.getSystemId();
         this.smppUser = systemId;
 
-        boolean authenticated = this.auth.auth(systemId, bind.getPassword());
-        if (authenticated) {
+        // do not attempt authentication if already bound
+        if (this.listener.getSessionBridge(systemId) != null)
+            return Response.ALREADY_BOUND;
+
+        Response authResponse = this.auth.auth(systemId, bind.getPassword());
+        if (authResponse == Response.OK) {
             // let the rest of the system know we are successfully bound
             this.listener.activateSession(systemId);
-
             onAuthSuccess(systemId);
-            return Response.OK;
         }
         else {
             onAuthFailure(systemId);
-            return Response.BIND_FAILED;
         }
+
+        return authResponse;
     }
 
+    private Response onUnBind() {
+        return Response.OK;
+    }
+
+    // this is to keep the connection open
     private Response onEnquireLink() {
         return Response.OK;
     }

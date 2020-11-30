@@ -14,7 +14,9 @@ public class DaliaPacketProcessor implements PacketProcessor {
         String confPath = Config.getPrefixFile(Constants.SMPP_CONF_FILENAME);
         JsonAuthenticator authenticator = new JsonAuthenticator(confPath);
 
-        this.router = new DaliaSmppRequestRouter(authenticator, listener, database);
+        this.router = new DaliaSmppRequestRouter(database);
+        this.router.setListener(listener);
+        this.router.setAuthenticator(authenticator);
     }
 
     public void setWsdServer(WsdServer server) {
