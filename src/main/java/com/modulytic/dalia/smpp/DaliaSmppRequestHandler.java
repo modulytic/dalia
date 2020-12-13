@@ -1,25 +1,14 @@
 package com.modulytic.dalia.smpp;
 
-import com.google.i18n.phonenumbers.NumberParseException;
-import com.google.i18n.phonenumbers.PhoneNumberUtil;
-import com.google.i18n.phonenumbers.Phonenumber;
 import com.modulytic.dalia.billing.Vroute;
 import com.modulytic.dalia.billing.BillingManager;
 import com.modulytic.dalia.local.include.DbManager;
-import com.modulytic.dalia.smpp.api.NPI;
-import com.modulytic.dalia.smpp.api.RegisteredDelivery;
-import com.modulytic.dalia.smpp.api.TON;
+import com.modulytic.dalia.smpp.request.SubmitRequest;
+import com.modulytic.dalia.smpp.api.SMSCAddress;
 import com.modulytic.dalia.smpp.include.SmppRequestHandler;
 import com.modulytic.dalia.ws.WsdServer;
-import com.modulytic.dalia.ws.api.WsdMessage;
 import net.gescobar.smppserver.Response;
-import net.gescobar.smppserver.packet.Address;
 import net.gescobar.smppserver.packet.SmppRequest;
-import net.gescobar.smppserver.packet.SubmitSm;
-
-import java.util.Map;
-import java.util.TreeMap;
-import java.util.UUID;
 
 /**
  * Handle PDUs and distribute incoming SMSes
@@ -31,10 +20,6 @@ public class DaliaSmppRequestHandler extends SmppRequestHandler {
      */
     private final DbManager database;
 
-    /**
-     * {@link PhoneNumberUtil libphonenumber} instance so we can parse and format destination numbers
-     */
-    private final PhoneNumberUtil phoneUtil;
     private WsdServer wsdServer;
 
     /**
@@ -44,7 +29,6 @@ public class DaliaSmppRequestHandler extends SmppRequestHandler {
     public DaliaSmppRequestHandler(DbManager database) {
         super();
 
-        this.phoneUtil = PhoneNumberUtil.getInstance();
         this.database = database;
     }
 
@@ -64,76 +48,38 @@ public class DaliaSmppRequestHandler extends SmppRequestHandler {
     public void onAuthFailure(String sysId) {
     }
 
-    // TODO split this up into methods much better than this
+    // TODO handle replace if present on submit_sm
     @Override
-    public Response onSubmitSm(SubmitSm submitSm) {
+    public Response onSubmitSm(SubmitRequest submitSm) {
         Response response = Response.OK;
-        String messageId = UUID.randomUUID().toString();
-        response.setMessageId(messageId);
+        response.setMessageId(submitSm.getMessageId());
 
-        // Parse destination phone number
-        Phonenumber.PhoneNumber destNumber;
-        String destFormatted;
-        try {
-            Address destAddress = submitSm.getDestAddress();
-
-            // make sure type of number is something we can handle
-            byte ton = destAddress.getTon();
-            if (ton != TON.INTERNATIONAL && ton != TON.NATIONAL)
-                return Response.INVALID_DESTINATION_TON;
-
-            // make sure numbering plan identification is something we can process
-            byte npi = destAddress.getNpi();
-            if (npi != NPI.E164 && npi != NPI.NATIONAL)
-                return Response.INVALID_DESTINATION_NPI;
-
-            destNumber    = this.phoneUtil.parse(destAddress.getAddress(), "US");
-            destFormatted = this.phoneUtil.format(destNumber, PhoneNumberUtil.PhoneNumberFormat.E164);
-        } catch (NumberParseException e) {
+        // Parse destination phone number, and pass errors to client
+        SMSCAddress dest = submitSm.getDestAddress();
+        if (!dest.isValidNpi()) {
+            return Response.INVALID_DESTINATION_NPI;
+        }
+        else if (!dest.isValidTon()) {
+            return Response.INVALID_DESTINATION_TON;
+        }
+        else if (!dest.isSupported()) {
             return Response.INVALID_DEST_ADDRESS;
         }
 
-        // if DLRs are requested, save relevant information for creating DeliverSM in database
-        RegisteredDelivery registeredDelivery = new RegisteredDelivery(submitSm.getRegisteredDelivery());
-        boolean shouldForwardDlrs = registeredDelivery.getForwardDlrs();
-        if (shouldForwardDlrs) {
-            String srcAddr = submitSm.getSourceAddress().getAddress();
-
-            // reverse src and dst because these are the details for future DLRs
-            Map<String, Object> values = new TreeMap<>();
-            values.put("msg_id", messageId);
-            values.put("src_addr", destFormatted);
-            values.put("dst_addr", srcAddr);
-            values.put("failure_only", registeredDelivery.getFailureOnly());
-            values.put("intermediate", registeredDelivery.getIntermediate());
-            values.put("smpp_user", this.smppUser);
-
-            this.database.insert("dlr_status", values);
-        }
-
         // save message to our database for billing purposes
-        int countryCode = destNumber.getCountryCode();
         BillingManager billingManager = new BillingManager(this.database);
-        Vroute vroute = billingManager.getActiveVroute(countryCode);
-        billingManager.logMessage(messageId, this.smppUser, countryCode, vroute);
-
-        // build params to forward request to endpoint
-        Map<String, Object> sendParams = new TreeMap<>();
-        sendParams.put("to", destFormatted);
-        sendParams.put("content", submitSm.getShortMessage());
-        sendParams.put("id", messageId);
-        sendParams.put("dlr", shouldForwardDlrs);
-        sendParams.put("schedule_delivery_time", submitSm.getScheduleDeliveryTime());
-        sendParams.put("validity_period", submitSm.getValidityPeriod());
-
-        // forward request
-        // TODO check status returned and fail if needed
-        WsdMessage sendMessage = new WsdMessage("send.php", sendParams);
-        boolean sendSuccess = wsdServer.sendNext(sendMessage);
+        Vroute vroute = billingManager.getActiveVroute(dest.getCountryCode());
+        billingManager.logMessage(submitSm.getMessageId(), getSmppUser(), dest.getCountryCode(), vroute);
 
         // no clients are available to take the message
-        if (!sendSuccess)
+        boolean sendSuccess = wsdServer.sendNext(submitSm.toEndpointRequest());
+        if (sendSuccess) {
+            if (submitSm.getShouldForwardDLRs())
+                submitSm.persistDLRParamsTo(this.database);
+        }
+        else {
             return Response.SYSTEM_ERROR;
+        }
 
         // TODO if intermediate DLRs requested, send accepted/en_route
 

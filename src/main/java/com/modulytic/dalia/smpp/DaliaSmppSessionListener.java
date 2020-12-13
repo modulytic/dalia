@@ -15,7 +15,7 @@ import java.util.List;
  */
 public class DaliaSmppSessionListener implements SmppSessionListener {
     /**
-     * Hashmap of active connections so we can access them quickly
+     * Hashmap of active connections, indexed by username, so we can access them quickly
      */
     private final HashMap<String, DaliaSessionBridge> bridges;
 
@@ -45,7 +45,6 @@ public class DaliaSmppSessionListener implements SmppSessionListener {
      */
     @Override
     public void created(SmppSession smppSession) {
-        // created, but may never be bound
         this.pendingSessions.add(smppSession);
     }
 

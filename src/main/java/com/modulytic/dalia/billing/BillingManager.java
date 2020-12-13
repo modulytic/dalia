@@ -1,9 +1,8 @@
 package com.modulytic.dalia.billing;
 
+import com.google.common.collect.Table;
 import com.modulytic.dalia.local.include.DbManager;
 
-import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
 
@@ -23,11 +22,11 @@ public class BillingManager {
         match.put("country_code", countryCode);
         match.put("is_active", true);
 
-        List<HashMap<String, ?>> rs = this.database.fetch("billing_vroutes", match);
+        Table<Integer, String, Object> rs = this.database.fetch("billing_vroutes", match);
         if (rs == null)         // empty
             return null;
 
-        return new Vroute(rs.get(0));
+        return new Vroute(rs.row(0));
     }
 
     public void logMessage(String messageId, String smppUser, int countryCode, Vroute vroute) {

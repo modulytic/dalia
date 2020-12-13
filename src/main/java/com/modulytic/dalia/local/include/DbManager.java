@@ -1,12 +1,11 @@
 package com.modulytic.dalia.local.include;
 
+import com.google.common.collect.Table;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.sql.Timestamp;
+import java.util.*;
 
 /**
  * Abstract class for interfacing with persistent databases
@@ -14,8 +13,25 @@ import java.util.Set;
  */
 public abstract class DbManager {
     protected final Logger LOGGER;
+
+    private final Map<String, Class<?>> requiredKeys;
+
     public DbManager() {
         LOGGER = LoggerFactory.getLogger(this.getClass());
+
+        requiredKeys = new HashMap<>();
+        requiredKeys.put("msg_id", String.class);
+        requiredKeys.put("msg_status", String.class);
+        requiredKeys.put("failure_only", Boolean.class);
+        requiredKeys.put("intermediate", Boolean.class);
+        requiredKeys.put("submit_date", Timestamp.class);
+        requiredKeys.put("src_addr", String.class);
+        requiredKeys.put("dst_addr", String.class);
+        requiredKeys.put("smpp_user", String.class);
+    }
+
+    public Map<String, Class<?>> getRequiredKeys() {
+        return this.requiredKeys;
     }
 
     /**
@@ -24,7 +40,7 @@ public abstract class DbManager {
      * @param match Parameters to match
      * @return      List of maps, where each map is a row
      */
-    public List<HashMap<String, ?>> fetch(String table, Map<String, ?> match) {
+    public Table<Integer, String, Object> fetch(String table, Map<String, ?> match) {
         return fetch(table, match, null);
     }
 
@@ -50,7 +66,7 @@ public abstract class DbManager {
      * @param columns   Columns to return
      * @return          List of maps, where each map is a row
      */
-    public abstract List<HashMap<String, ?>> fetch(String table, Map<String, ?> match, Set<String> columns);
+    public abstract Table<Integer, String, Object> fetch(String table, Map<String, ?> match, Set<String> columns);
 
     /**
      * If connection to database needs to be manually closed, that can be implemented here

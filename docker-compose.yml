@@ -23,6 +23,3 @@ services:
     environment:
       DALIA_DB_HOST: db
       DALIA_PREFIX: /app/prefix
-
-volumes:
-  db_data: {}

@@ -1,5 +1,7 @@
 package com.modulytic.dalia.local;
 
+import com.google.common.collect.HashBasedTable;
+import com.google.common.collect.Table;
 import com.modulytic.dalia.Constants;
 import com.modulytic.dalia.local.include.DbManager;
 
@@ -195,19 +197,33 @@ public class MySqlDbManager extends DbManager {
      * @return              List of Maps, each map representing a row
      * @throws SQLException any of the operations on ResultSet can throw an {@link SQLException}
      */
-    private List<HashMap<String, ?>> parseResultSet(ResultSet resultSet) throws SQLException {
+    private Table<Integer, String, Object> parseResultSet(ResultSet resultSet) throws SQLException {
         ResultSetMetaData rsMetaData = resultSet.getMetaData();
         int cols = rsMetaData.getColumnCount();
 
-        ArrayList<HashMap<String, ?>> results = new ArrayList<>();
+        Table<Integer, String, Object> results = HashBasedTable.create();
 
-        while (resultSet.next()) {
-            HashMap<String, Object> row = new HashMap<>();
-            for (int i = 0; i <= cols; i++) {
-                row.put(rsMetaData.getColumnName(i), resultSet.getObject(i));
+        Map<String, Class<?>> classNames = getRequiredKeys();
+
+        // i is rows, j is columns
+        for (int i = 0; resultSet.next(); i++) {
+            for (int j = 0; j <= cols; j++) {
+                String columnName = rsMetaData.getColumnName(j);
+                Class<?> columnType = classNames.get(columnName);
+
+                if (columnType.isInstance(String.class)) {
+                    results.put(i, columnName, resultSet.getString(j));
+                }
+                else if (columnType.isInstance(Timestamp.class)) {
+                    results.put(i, columnName, resultSet.getTimestamp(j));
+                }
+                else if (columnType.isInstance(Boolean.class)) {
+                    results.put(i, columnName, resultSet.getBoolean(j));
+                }
+                else {
+                    results.put(i, columnName, resultSet.getObject(j));
+                }
             }
-
-            results.add(row);
         }
 
         resultSet.close();
@@ -219,7 +235,7 @@ public class MySqlDbManager extends DbManager {
     }
 
     @Override
-    public List<HashMap<String, ?>> fetch(String table, Map<String, ?> match, Set<String> columns) {
+    public Table<Integer, String, Object> fetch(String table, Map<String, ?> match, Set<String> columns) {
         String whereClause = generateSqlTests(match);
 
         String colsRaw = "*";

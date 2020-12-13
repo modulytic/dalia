@@ -1,6 +1,7 @@
 package com.modulytic.dalia.smpp.include;
 
 import com.modulytic.dalia.smpp.DaliaSmppSessionListener;
+import com.modulytic.dalia.smpp.request.SubmitRequest;
 import net.gescobar.smppserver.Response;
 import net.gescobar.smppserver.ResponseSender;
 import net.gescobar.smppserver.packet.*;
@@ -14,8 +15,8 @@ import org.slf4j.LoggerFactory;
 public abstract class SmppRequestHandler {
     private DaliaSmppSessionListener listener = null;
     private SmppAuthenticator auth = null;
+    private String smppUser;
 
-    protected String smppUser;
     protected final Logger LOGGER = LoggerFactory.getLogger(SmppRequestHandler.class);
 
     /**
@@ -59,7 +60,10 @@ public abstract class SmppRequestHandler {
             response = this.onEnquireLink();
         }
         else if (req.isSubmitSm()) {
-            response = this.onSubmitSm((SubmitSm) req);
+            SubmitRequest submitRequest = new SubmitRequest((SubmitSm) req);
+            submitRequest.setSmppUser(this.smppUser);
+
+            response = this.onSubmitSm(submitRequest);
         }
         else if (req.getCommandId() == SmppPacket.CANCEL_SM) {
             response = this.onCancelSm(req);
@@ -80,6 +84,10 @@ public abstract class SmppRequestHandler {
         if (response != null) {
             res.send(response);
         }
+    }
+
+    public String getSmppUser() {
+        return this.smppUser;
     }
 
     /**
@@ -153,7 +161,7 @@ public abstract class SmppRequestHandler {
      * @param submitSm  submit_sm PDU
      * @return  {@link Response Response}
      */
-    public abstract Response onSubmitSm(SubmitSm submitSm);
+    public abstract Response onSubmitSm(SubmitRequest submitSm);
 
     /**
      * Handle cancel_sm PDU
