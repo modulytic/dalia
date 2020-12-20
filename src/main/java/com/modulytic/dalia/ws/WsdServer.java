@@ -1,7 +1,10 @@
 package com.modulytic.dalia.ws;
 
 import com.google.gson.Gson;
+import com.google.gson.internal.LinkedTreeMap;
 import com.modulytic.dalia.ws.api.WsdMessage;
+import com.modulytic.dalia.ws.api.WsdMessageCode;
+import com.modulytic.dalia.ws.include.WsdStatusListener;
 import org.java_websocket.WebSocket;
 import org.java_websocket.handshake.ClientHandshake;
 import org.java_websocket.server.WebSocketServer;
@@ -10,6 +13,7 @@ import org.slf4j.LoggerFactory;
 
 import java.net.InetSocketAddress;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 
 /**
@@ -35,6 +39,11 @@ public class WsdServer extends WebSocketServer {
     private WsdMessageHandler handler = null;
 
     /**
+     * Status listeners
+     */
+    private final HashMap<String, WsdStatusListener> pendingStatuses;
+
+    /**
      * Create a new WebSockets server that can start with .run()
      * @param port  port to start server on
      */
@@ -42,6 +51,8 @@ public class WsdServer extends WebSocketServer {
         super(new InetSocketAddress("0.0.0.0", port));
 
         this.activeConnections = new ArrayList<>();
+        this.pendingStatuses = new HashMap<>();
+
         LOGGER.info(String.format("Attempting to start WebSocket server on port %d", port));
     }
 
@@ -84,11 +95,23 @@ public class WsdServer extends WebSocketServer {
      */
     @Override
     public void onMessage(WebSocket conn, String message) {
-        LOGGER.info(String.format("Received message from %s, processing", conn.getRemoteSocketAddress()));
+        LOGGER.info(String.format("Received message '%s' from %s, processing", message, conn.getRemoteSocketAddress()));
 
-        if (this.handler != null) {
-            WsdMessage wsdMessage = new Gson().fromJson(message, WsdMessage.class);
-            this.handler.onMessage(wsdMessage);
+        WsdMessage wsdMessage = new Gson().fromJson(message, WsdMessage.class);
+        if (wsdMessage.getName().equals("&cmd")) {
+            if (wsdMessage.getParams().get("code").equals("STATUS")) {
+                LinkedTreeMap<String, ?> data = (LinkedTreeMap<String, ?>) wsdMessage.getParams().get("data");
+
+                String id = (String) data.get("id");
+                int status = ((Double) data.get("status")).intValue();
+
+                pendingStatuses.get(id).onStatus(status);
+                pendingStatuses.remove(id);
+            }
+        }
+        else {
+            if (this.handler != null)
+                this.handler.onMessage(wsdMessage);
         }
     }
 
@@ -113,29 +136,26 @@ public class WsdServer extends WebSocketServer {
     /**
      * Send message to client, and do not advance the round-robin load distributor
      * @param message   message to send
-     * @return          true on success, false on failure
      */
     @SuppressWarnings("unused")
-    public boolean sendCurrent(WsdMessage message) {
-        return send(message, false);
+    public void sendCurrent(WsdMessage message, WsdStatusListener listener) {
+        send(message, listener, false);
     }
 
     /**
      * Send message to client, and advance round-robin load distributor
      * @param message   message to send
-     * @return          true on success, false on failure
      */
-    public boolean sendNext(WsdMessage message) {
-        return send(message, true);
+    public void sendNext(WsdMessage message, WsdStatusListener listener) {
+        send(message, listener,true);
     }
 
     /**
      * Send message to client
      * @param message   message to send
      * @param advance   if true: advance round-robin load distributor, if false do not
-     * @return          true on success, false on failure
      */
-    private boolean send(WsdMessage message, boolean advance) {
+    private void send(WsdMessage message, WsdStatusListener listener, boolean advance) {
         if (advance)
             activeIndex++;
 
@@ -143,19 +163,14 @@ public class WsdServer extends WebSocketServer {
             activeIndex = 0;
 
         try {
-            // actually do the sending
-            // TODO read the status back and return it
             WebSocket current = activeConnections.get(activeIndex);
-            current.send(message.toString());
-            LOGGER.info(String.format("Successfully sent message to client[%d]", activeIndex));
 
-            return true;
+            pendingStatuses.put(message.getId(), listener);
+            current.send(message.toString());
         }
         catch (IndexOutOfBoundsException e) {
             // we have tested if activeIndex is greater than size, so this can only happen if size is actually 0
-            LOGGER.info(String.format("Attempted to send message '%s', but no clients connected", message.getId()));
+            listener.onStatus(WsdMessageCode.NO_CLIENTS);
         }
-
-        return false;
     }
 }

@@ -7,7 +7,10 @@ import com.modulytic.dalia.smpp.request.SubmitRequest;
 import com.modulytic.dalia.smpp.api.SMSCAddress;
 import com.modulytic.dalia.smpp.include.SmppRequestHandler;
 import com.modulytic.dalia.ws.WsdServer;
+import com.modulytic.dalia.ws.api.WsdMessageCode;
+import com.modulytic.dalia.ws.include.WsdStatusListener;
 import net.gescobar.smppserver.Response;
+import net.gescobar.smppserver.ResponseSender;
 import net.gescobar.smppserver.packet.SmppRequest;
 
 /**
@@ -50,20 +53,23 @@ public class DaliaSmppRequestHandler extends SmppRequestHandler {
 
     // TODO handle replace if present on submit_sm
     @Override
-    public Response onSubmitSm(SubmitRequest submitSm) {
-        Response response = Response.OK;
+    public void onSubmitSm(SubmitRequest submitSm, ResponseSender responseSender) {
+        final Response response = Response.OK;
         response.setMessageId(submitSm.getMessageId());
 
         // Parse destination phone number, and pass errors to client
         SMSCAddress dest = submitSm.getDestAddress();
         if (!dest.isValidNpi()) {
-            return Response.INVALID_DESTINATION_NPI;
+            responseSender.send(Response.INVALID_DESTINATION_NPI);
+            return;
         }
         else if (!dest.isValidTon()) {
-            return Response.INVALID_DESTINATION_TON;
+            responseSender.send(Response.INVALID_DESTINATION_TON);
+            return;
         }
         else if (!dest.isSupported()) {
-            return Response.INVALID_DEST_ADDRESS;
+            responseSender.send(Response.INVALID_DEST_ADDRESS);
+            return;
         }
 
         // save message to our database for billing purposes
@@ -72,42 +78,53 @@ public class DaliaSmppRequestHandler extends SmppRequestHandler {
         billingManager.logMessage(submitSm.getMessageId(), getSmppUser(), dest.getCountryCode(), vroute);
 
         // no clients are available to take the message
-        boolean sendSuccess = wsdServer.sendNext(submitSm.toEndpointRequest());
-        if (sendSuccess) {
-            if (submitSm.getShouldForwardDLRs())
-                submitSm.persistDLRParamsTo(this.database);
-        }
-        else {
-            return Response.SYSTEM_ERROR;
-        }
+        WsdStatusListener listener = new WsdStatusListener() {
+            @Override
+            public void onStatus(int status) {
+                if (status == WsdMessageCode.SUCCESS) {
+                    LOGGER.info(String.format("Message '%s' successfully sent", submitSm.getMessageId()));
+                    if (submitSm.getShouldForwardDLRs()) {
+                        submitSm.persistDLRParamsTo(database);
+                    }
+
+                    responseSender.send(response);
+                }
+                else if (status == WsdMessageCode.NO_CLIENTS) {
+                    LOGGER.error(String.format("Attempted to send message '%s', but no clients connected", submitSm.getMessageId()));
+                    responseSender.send(Response.SYSTEM_ERROR);
+                }
+                else {
+                    LOGGER.error(String.format("Message '%s' failed to be sent, error code: %d", submitSm.getMessageId(), status));
+                    responseSender.send(Response.SYSTEM_ERROR);
+                }
+            }
+        };
+        wsdServer.sendNext(submitSm.toEndpointRequest(), listener);
 
         // TODO if intermediate DLRs requested, send accepted/en_route
-
-        return response;
     }
 
     @Override
-    public Response onCancelSm(SmppRequest cancelSm) {
-        return Response.OK;
+    public void onCancelSm(SmppRequest cancelSm, ResponseSender responseSender) {
+        responseSender.send(Response.OK);
     }
 
     /**
      * If message is in DLR database, handle properly, otherwise generic_nack
      * @param querySm   query_sm PDU
-     * @return          {@link Response SMPP response}
      */
     @Override
-    public Response onQuerySm(SmppRequest querySm) {
-        return Response.OK;
+    public void onQuerySm(SmppRequest querySm, ResponseSender responseSender) {
+        responseSender.send(Response.OK);
     }
 
     @Override
-    public Response onReplaceSm(SmppRequest replaceSm) {
-        return Response.OK;
+    public void onReplaceSm(SmppRequest replaceSm, ResponseSender responseSender) {
+        responseSender.send(Response.OK);
     }
 
     @Override
-    public Response onSubmitMulti(SmppRequest submitMulti) {
-        return Response.OK;
+    public void onSubmitMulti(SmppRequest submitMulti, ResponseSender responseSender) {
+        responseSender.send(Response.OK);
     }
 }

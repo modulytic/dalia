@@ -48,41 +48,35 @@ public abstract class SmppRequestHandler {
             return;
         }
 
-        final Response response;
-
         if (req.isBind()) {
-            response = this.onBind((Bind) req);
+            this.onBind((Bind) req, res);
         }
         else if (req.getCommandId() == SmppPacket.UNBIND) {
-            response = this.onUnBind();
+            this.onUnBind(res);
         }
         else if (req.getCommandId() == SmppPacket.ENQUIRE_LINK) {
-            response = this.onEnquireLink();
+            this.onEnquireLink(res);
         }
         else if (req.isSubmitSm()) {
             SubmitRequest submitRequest = new SubmitRequest((SubmitSm) req);
             submitRequest.setSmppUser(this.smppUser);
 
-            response = this.onSubmitSm(submitRequest);
+            this.onSubmitSm(submitRequest, res);
         }
         else if (req.getCommandId() == SmppPacket.CANCEL_SM) {
-            response = this.onCancelSm(req);
+            this.onCancelSm(req, res);
         }
         else if (req.getCommandId() == SmppPacket.QUERY_SM) {
-            response = this.onQuerySm(req);
+            this.onQuerySm(req, res);
         }
         else if (req.getCommandId() == SmppPacket.REPLACE_SM) {
-            response = this.onReplaceSm(req);
+            this.onReplaceSm(req, res);
         }
         else if (req.getCommandId() == SmppPacket.SUBMIT_MULTI) {
-            response = this.onSubmitMulti(req);
+            this.onSubmitMulti(req, res);
         }
         else {
-            response = Response.INVALID_COMMAND_ID;
-        }
-
-        if (response != null) {
-            res.send(response);
+            res.send(Response.INVALID_COMMAND_ID);
         }
     }
 
@@ -101,19 +95,22 @@ public abstract class SmppRequestHandler {
      * @param bind  bind packet
      * @return      Response from authenticator, or failure in certain cases
      */
-    public Response onBind(Bind bind) {
+    public void onBind(Bind bind, ResponseSender responseSender) {
         // if no authenticator, always fail
         if (this.auth == null) {
             LOGGER.error("Cannot authenticate user: no authenticator defined in request router!!!");
-            return Response.BIND_FAILED;
+            responseSender.send(Response.BIND_FAILED);
+            return;
         }
 
         final String systemId = bind.getSystemId();
         this.smppUser = systemId;
 
         // do not attempt authentication if already bound
-        if (this.listener.getSessionBridge(systemId) != null)
-            return Response.ALREADY_BOUND;
+        if (this.listener.getSessionBridge(systemId) != null) {
+            responseSender.send(Response.ALREADY_BOUND);
+            return;
+        }
 
         Response authResponse = this.auth.auth(systemId, bind.getPassword());
         if (authResponse == Response.OK) {
@@ -125,23 +122,23 @@ public abstract class SmppRequestHandler {
             onAuthFailure(systemId);
         }
 
-        return authResponse;
+        responseSender.send(authResponse);
     }
 
     /**
      * Handle disconnect from ESME
      * @return  {@link Response Response.OK}
      */
-    private Response onUnBind() {
-        return Response.OK;
+    private void onUnBind(ResponseSender responseSender) {
+        responseSender.send(Response.OK);
     }
 
     /**
      * Keep connection open by acknowledging enquire_link PDUs
      * @return {@link Response Response.OK}
      */
-    private Response onEnquireLink() {
-        return Response.OK;
+    private void onEnquireLink(ResponseSender responseSender) {
+        responseSender.send(Response.OK);
     }
 
     /**
@@ -161,33 +158,33 @@ public abstract class SmppRequestHandler {
      * @param submitSm  submit_sm PDU
      * @return  {@link Response Response}
      */
-    public abstract Response onSubmitSm(SubmitRequest submitSm);
+    public abstract void onSubmitSm(SubmitRequest submitSm, ResponseSender responseSender);
 
     /**
      * Handle cancel_sm PDU
      * @param cancelSm  cancel_sm PDU
      * @return  {@link Response Response}
      */
-    public abstract Response onCancelSm(SmppRequest cancelSm);
+    public abstract void onCancelSm(SmppRequest cancelSm, ResponseSender responseSender);
 
     /**
      * Handle query_sm PDU
      * @param querySm  query_sm PDU
      * @return  {@link Response Response}
      */
-    public abstract Response onQuerySm(SmppRequest querySm);
+    public abstract void onQuerySm(SmppRequest querySm, ResponseSender responseSender);
 
     /**
      * Handle replace_sm PDU
      * @param replaceSm  replace_sm PDU
      * @return  {@link Response Response}
      */
-    public abstract Response onReplaceSm(SmppRequest replaceSm);
+    public abstract void onReplaceSm(SmppRequest replaceSm, ResponseSender responseSender);
 
     /**
      * Handle submit_multi PDU
      * @param submitMulti  submit_multi PDU
      * @return  {@link Response Response}
      */
-    public abstract Response onSubmitMulti(SmppRequest submitMulti);
+    public abstract void onSubmitMulti(SmppRequest submitMulti, ResponseSender responseSender);
 }
