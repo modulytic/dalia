@@ -32,6 +32,10 @@ public class DaliaPacketProcessor implements PacketProcessor {
         this.router.setAuthenticator(authenticator);
     }
 
+    public void setDlrUpdateHandler(DLRUpdateHandler handler) {
+        this.router.setUpdateHandler(handler);
+    }
+
     /**
      * Pass WebSocket server to {@link DaliaSmppRequestHandler router}
      * @param server    a {@link WsdServer WebSocket server}

@@ -2,6 +2,7 @@ package com.modulytic.dalia;
 
 import com.cloudhopper.smpp.type.SmppChannelException;
 import com.modulytic.dalia.local.MySqlDbManager;
+import com.modulytic.dalia.smpp.DLRUpdateHandler;
 import com.modulytic.dalia.smpp.DaliaPacketProcessor;
 import com.modulytic.dalia.smpp.DaliaSmppSessionListener;
 import com.modulytic.dalia.ws.WsdMessageHandler;
@@ -24,7 +25,9 @@ public class Main {
         SmppServer smppServer = new SmppServer(Constants.SMPP_HOST_PORT, packetProcessor);
 
         // Externally-accessible WebSockets server
-        WsdMessageHandler wsdMessageHandler = new WsdMessageHandler(sessionListener, database);
+        DLRUpdateHandler updateHandler = new DLRUpdateHandler(database, sessionListener);
+        packetProcessor.setDlrUpdateHandler(updateHandler);
+        WsdMessageHandler wsdMessageHandler = new WsdMessageHandler(updateHandler);
         WsdServer wsdServer = new WsdServer(Constants.WS_HOST_PORT);
         wsdServer.setHandler(wsdMessageHandler);
         packetProcessor.setWsdServer(wsdServer);                // give packet processor access to server

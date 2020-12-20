@@ -17,8 +17,8 @@ public class WsdMessageHandler {
      */
     private final DLRUpdateHandler dlrUpdateHandler;
 
-    public WsdMessageHandler(DaliaSmppSessionListener listener, MySqlDbManager database) {
-        this.dlrUpdateHandler = new DLRUpdateHandler(database, listener);
+    public WsdMessageHandler(DLRUpdateHandler updateHandler) {
+        this.dlrUpdateHandler = updateHandler;
     }
 
     /**

@@ -3,6 +3,8 @@ package com.modulytic.dalia.smpp;
 import com.modulytic.dalia.billing.Vroute;
 import com.modulytic.dalia.billing.BillingManager;
 import com.modulytic.dalia.local.include.DbManager;
+import com.modulytic.dalia.smpp.api.MessageState;
+import com.modulytic.dalia.smpp.api.RegisteredDelivery;
 import com.modulytic.dalia.smpp.request.SubmitRequest;
 import com.modulytic.dalia.smpp.api.SMSCAddress;
 import com.modulytic.dalia.smpp.include.SmppRequestHandler;
@@ -25,6 +27,8 @@ public class DaliaSmppRequestHandler extends SmppRequestHandler {
 
     private WsdServer wsdServer;
 
+    private DLRUpdateHandler updateHandler;
+
     /**
      * Constructor
      * @param database  Active database connection
@@ -33,6 +37,33 @@ public class DaliaSmppRequestHandler extends SmppRequestHandler {
         super();
 
         this.database = database;
+    }
+
+    public void setUpdateHandler(DLRUpdateHandler handler) {
+        this.updateHandler = handler;
+    }
+
+    private void updateMessageStatus(String id, RegisteredDelivery registeredDelivery, String status) {
+        if (id == null || registeredDelivery == null || status == null)
+            return;
+
+        if (!registeredDelivery.getForwardDlrs())
+            return;
+
+        if (!MessageState.isValid(status))
+            return;
+
+        if (this.updateHandler == null)
+            return;
+
+        if (registeredDelivery.getFailureOnly() && !MessageState.isError(status))
+            return;
+        else if (!registeredDelivery.getIntermediate() && !MessageState.isFinal(status))
+            return;
+        else if (!registeredDelivery.getReceiveFinal() && MessageState.isFinal(status))
+            return;
+
+        this.updateHandler.updateStatus(id, status);
     }
 
     /**
@@ -72,6 +103,8 @@ public class DaliaSmppRequestHandler extends SmppRequestHandler {
             return;
         }
 
+        final RegisteredDelivery registeredDelivery = new RegisteredDelivery(submitSm.getRegisteredDelivery());
+
         // save message to our database for billing purposes
         BillingManager billingManager = new BillingManager(this.database);
         Vroute vroute = billingManager.getActiveVroute(dest.getCountryCode());
@@ -85,6 +118,9 @@ public class DaliaSmppRequestHandler extends SmppRequestHandler {
                     LOGGER.info(String.format("Message '%s' successfully sent", submitSm.getMessageId()));
                     if (submitSm.getShouldForwardDLRs()) {
                         submitSm.persistDLRParamsTo(database);
+
+                        // if intermediate DLRs requested, send accepted/en_route
+                        updateMessageStatus(submitSm.getMessageId(), registeredDelivery, MessageState.EN_ROUTE);
                     }
 
                     responseSender.send(response);
@@ -99,9 +135,8 @@ public class DaliaSmppRequestHandler extends SmppRequestHandler {
                 }
             }
         };
-        wsdServer.sendNext(submitSm.toEndpointRequest(), listener);
 
-        // TODO if intermediate DLRs requested, send accepted/en_route
+        wsdServer.sendNext(submitSm.toEndpointRequest(), listener);
     }
 
     @Override
