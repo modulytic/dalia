@@ -93,7 +93,6 @@ public abstract class SmppRequestHandler {
      * </p>
      *
      * @param bind  bind packet
-     * @return      Response from authenticator, or failure in certain cases
      */
     public void onBind(Bind bind, ResponseSender responseSender) {
         // if no authenticator, always fail
@@ -127,7 +126,6 @@ public abstract class SmppRequestHandler {
 
     /**
      * Handle disconnect from ESME
-     * @return  {@link Response Response.OK}
      */
     private void onUnBind(ResponseSender responseSender) {
         responseSender.send(Response.OK);
@@ -135,7 +133,6 @@ public abstract class SmppRequestHandler {
 
     /**
      * Keep connection open by acknowledging enquire_link PDUs
-     * @return {@link Response Response.OK}
      */
     private void onEnquireLink(ResponseSender responseSender) {
         responseSender.send(Response.OK);
@@ -156,35 +153,30 @@ public abstract class SmppRequestHandler {
     /**
      * Handle submit_sm PDU
      * @param submitSm  submit_sm PDU
-     * @return  {@link Response Response}
      */
     public abstract void onSubmitSm(SubmitRequest submitSm, ResponseSender responseSender);
 
     /**
      * Handle cancel_sm PDU
      * @param cancelSm  cancel_sm PDU
-     * @return  {@link Response Response}
      */
     public abstract void onCancelSm(SmppRequest cancelSm, ResponseSender responseSender);
 
     /**
      * Handle query_sm PDU
      * @param querySm  query_sm PDU
-     * @return  {@link Response Response}
      */
     public abstract void onQuerySm(SmppRequest querySm, ResponseSender responseSender);
 
     /**
      * Handle replace_sm PDU
      * @param replaceSm  replace_sm PDU
-     * @return  {@link Response Response}
      */
     public abstract void onReplaceSm(SmppRequest replaceSm, ResponseSender responseSender);
 
     /**
      * Handle submit_multi PDU
      * @param submitMulti  submit_multi PDU
-     * @return  {@link Response Response}
      */
     public abstract void onSubmitMulti(SmppRequest submitMulti, ResponseSender responseSender);
 }
