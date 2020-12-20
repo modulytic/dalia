@@ -9,8 +9,8 @@ import com.modulytic.dalia.smpp.api.InvalidStatusException;
 import com.modulytic.dalia.smpp.api.MessageState;
 
 import java.sql.Timestamp;
+import java.util.LinkedHashMap;
 import java.util.Map;
-import java.util.TreeMap;
 
 /**
  * Incoming request for a DLR update
@@ -35,7 +35,7 @@ public class DLRRequest {
     /**
      * DLR params
      */
-    private Map<String, Object> values = null;
+    private LinkedHashMap<String, Object> values = null;
 
     /**
      * Map of message ID, saved in case of repeated requests
@@ -53,14 +53,14 @@ public class DLRRequest {
 
         Table<Integer, String, Object> values = this.database.fetch(this.dbTable, getMatch());
         if (!values.isEmpty())
-            setValues(values.row(0));
+            setValues((LinkedHashMap<String, Object>) values.row(0));
     }
 
     /**
      * Populate values if they are valid
      * @param values    map of values fetched from database
      */
-    private void setValues(Map<String, Object> values) {
+    private void setValues(LinkedHashMap<String, Object> values) {
         Map<String, Class<?>> requiredKeys = this.database.getRequiredKeys();
 
         for (String key : requiredKeys.keySet()) {
@@ -96,15 +96,15 @@ public class DLRRequest {
      * Generate or get match map based on message ID
      * @return  map of strings to match
      */
-    private Map<String, String> getMatch() {
+    private LinkedHashMap<String, ?> getMatch() {
         if (this.match == null) {
-            Map<String, String> match = new TreeMap<>();
+            Map<String, String> match = new LinkedHashMap<>();
             match.put("msg_id", this.messageId);
 
             this.match = match;
         }
 
-        return this.match;
+        return (LinkedHashMap<String, ?>) this.match;
     }
 
     /**

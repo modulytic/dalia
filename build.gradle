@@ -14,8 +14,12 @@ repositories {
     jcenter()
 }
 
+test {
+    useJUnitPlatform()
+}
+
 dependencies {
-    testImplementation 'junit:junit:4.13.1'
+    testImplementation 'org.junit.jupiter:junit-jupiter:5.4.2'
     testImplementation 'org.mockito:mockito-core:3.6.28'
 
     implementation fileTree(include: ['*.jar'], dir: 'libs')

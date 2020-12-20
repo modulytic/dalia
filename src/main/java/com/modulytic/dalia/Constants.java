@@ -1,5 +1,7 @@
 package com.modulytic.dalia;
 
+import java.time.ZoneId;
+
 /**
  * Constants relevant to the program that should be easy to change
  * @author  <a href="mailto:noah@modulytic.com">Noah Sandman</a>
@@ -54,4 +56,9 @@ public class Constants {
      * Default port to host the WebSockets server on
      */
     public static int WS_HOST_PORT = 3000;
+
+    /**
+     * Default timezone to use
+     */
+    public static ZoneId DEFAULT_TZ = ZoneId.of("Etc/UTC");
 }

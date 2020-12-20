@@ -1,4 +1,4 @@
-FROM gradle:jdk8 as build
+FROM gradle:jdk11 as build
 LABEL maintainer="Noah Sandman <noah@modulytic.com>"
 
 COPY --chown=gradle:gradle . /home/gradle/src
@@ -6,7 +6,7 @@ WORKDIR /home/gradle/src
 RUN gradle build --no-daemon
 
 # Run
-FROM openjdk:8-jre-slim
+FROM openjdk:11-jre-slim
 ARG DALIA_VERSION="1.0-SNAPSHOT"
 
 # Extract executable

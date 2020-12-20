@@ -19,7 +19,7 @@ public class RegisteredDelivery {
     /**
      * Whether client only wants final failure DLRs
      */
-    private final boolean failureOnly;
+    private boolean failureOnly;
 
     /**
      * Whether client wants intermediate DLRs
@@ -34,6 +34,10 @@ public class RegisteredDelivery {
         this.receiveFinal = checkBit(registeredDelivery, 0);
         this.failureOnly  = checkBit(registeredDelivery, 1);
         this.intermediate = checkBit(registeredDelivery, 4);
+
+        // if both fields are set, ignore failure only
+        if (this.receiveFinal)
+            this.failureOnly = false;
 
         this.forwardDlrs = (receiveFinal || failureOnly || intermediate);
     }

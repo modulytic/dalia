@@ -6,9 +6,11 @@ import com.modulytic.dalia.Constants;
 import com.modulytic.dalia.local.include.DbManager;
 
 import java.sql.*;
+import java.sql.Date;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.*;
-
-// TODO sanitize all DB inputs!!!
 
 /**
  * {@link DbManager} for MySql
@@ -70,6 +72,14 @@ public class MySqlDbManager extends DbManager {
     }
 
     /**
+     * Constructor used for testing
+     * @param connection    Database connection object
+     */
+    public MySqlDbManager(Connection connection) {
+        this.connection = connection;
+    }
+
+    /**
      * Create JBDC URL for database
      * @param user      MySQL username
      * @param pass      MySQL password
@@ -82,111 +92,68 @@ public class MySqlDbManager extends DbManager {
         return String.format("jdbc:mysql://%s:%d/%s?user=%s&password=%s", host, port, database, user, pass);
     }
 
-    /**
-     * Format Java key-value pairs so that we can insert them easily into SQL queries
-     * <p>
-     *    Format for columns:  key1, key2, key3 <br>
-     *    Format for values: val1, val2, val3
-     * </p>
-     * <p>
-     *    Also checks if values are strings, and encloses it in quotes if this is the case
-     * </p>
-     * @param values    Map of values and keys
-     * @return          Map with two values: "columns" and "values", which can be directly inserted into a query
-     */
-    private HashMap<String, StringBuilder> generateSqlLists(Map<String, ?> values) {
-        StringBuilder columnsList = new StringBuilder();
-        StringBuilder valuesList  = new StringBuilder();
-
-        for (Map.Entry<String, ?> entry : values.entrySet()) {
-            // add our column
-            if (columnsList.length() > 0)
-                columnsList.append(", ");
-
-            columnsList.append(entry.getKey());
-
-            // add our value
-            if (valuesList.length() > 0)
-                valuesList.append(", ");
-
-            Object value = entry.getValue();
-            if (value instanceof String) {
-                valuesList.append("'");
-                valuesList.append(value);
-                valuesList.append("'");
-            }
-            else {
-                valuesList.append(value);
-            }
-        }
-
-        HashMap<String, StringBuilder> res = new HashMap<>();
-        res.put("columns", columnsList);
-        res.put("rows", valuesList);
-
-        return res;
+    private PreparedStatement prepareStatement(String query, LinkedHashMap<String, ?> values) throws SQLException {
+        return prepareStatement(query, values, null);
     }
 
-    /**
-     * Format Java key-value pairs so we can easily insert them into SQL queries
-     * <p>
-     *     Output format: key1=val1, key2=val2 <br>
-     *     Will enclose values in quotes if it is a string
-     * </p>
-     * @param match Map of keys and values
-     * @return      String that can be directly inserted into SQL query
-     */
-    private String generateSqlTests(Map<String, ?> match) {
-        StringBuilder whereClause = new StringBuilder();
-        for (Map.Entry<String, ?> entry : match.entrySet()) {
-            if (whereClause.length() > 0)
-                whereClause.append(" AND ");
+    private PreparedStatement prepareStatement(String query, LinkedHashMap<String, ?> values, LinkedHashMap<String, ?> matches) throws SQLException {
+        PreparedStatement statement = this.connection.prepareStatement(query);
 
-            whereClause
-                    .append(entry.getKey())
-                    .append("=");
+        List<Object> valuesArr = new ArrayList<>(values.values());
 
-            if (entry.getValue() instanceof String) {
-                whereClause.append("'");
-                whereClause.append(entry.getValue());
-                whereClause.append("'");
+        if (matches != null)
+            valuesArr.addAll(matches.values());
+
+        for (int i = 0; i < valuesArr.size(); i++) {
+            Object value = valuesArr.get(i);
+
+            if (value == null) {
+                statement.setNull(i+1, Types.NULL);
+            }
+            else if (value instanceof String) {
+                statement.setString(i+1, (String) value);
+            }
+            else if (value instanceof Integer) {
+                statement.setInt(i+1, (int) value);
+            }
+            else if (value instanceof Float) {
+                statement.setFloat(i+1, (float) value);
+            }
+            else if (value instanceof Double) {
+                statement.setDouble(i+1, (double) value);
+            }
+            else if (value instanceof Boolean) {
+                statement.setBoolean(i+1, (boolean) value);
+            }
+            else if (value instanceof LocalDateTime) {
+                LocalDateTime dt = (LocalDateTime) value;
+                statement.setString(i+1, dt.format(DateTimeFormatter.ofPattern("uuuu-MM-dd HH:mm:ss")));
+            }
+            else if (value instanceof LocalDate) {
+                LocalDate dt = (LocalDate) value;
+                statement.setString(i+1, dt.format(DateTimeFormatter.ofPattern("uuuu-MM-dd")));
             }
             else {
-                whereClause.append(entry.getValue());
+                statement.setObject(i+1, value);
             }
-
         }
 
-        return whereClause.toString();
-    }
-
-    /**
-     * Generate comma-separated list of columns
-     * @param cols  set of column names
-     * @return      String that can be directly inserted into SQL query
-     */
-    private String generateColumnList(Set<String> cols) {
-        StringBuilder columnsList = new StringBuilder();
-
-        for (String key : cols) {
-            // add our column
-            if (columnsList.length() > 0)
-                columnsList.append(", ");
-
-            columnsList.append(key);
-        }
-
-        return columnsList.toString();
+        return statement;
     }
 
     @Override
-    public void insert(String table, Map<String, ?> values) {
-        HashMap<String, StringBuilder> columns = generateSqlLists(values);
+    public void insert(String table, LinkedHashMap<String, ?> values) {
+        String columnsStr = String.join(",", values.keySet());
 
-        String query = String.format("INSERT INTO %s (%s) VALUES (%s);", table, columns.get("columns"), columns.get("rows"));
-        try (Statement statement = this.connection.createStatement()) {
-            statement.executeUpdate(query);
-        } catch (SQLException throwables) {
+        // same number of ?s as params, separated by commas
+        String valuesPlaceholder = "?, ".repeat(values.size());
+        valuesPlaceholder = valuesPlaceholder.substring(0, valuesPlaceholder.length()-2);
+
+        String query = String.format("INSERT INTO %s (%s) VALUES (%s);", table, columnsStr, valuesPlaceholder);
+        try (PreparedStatement statement = prepareStatement(query, values)) {
+            statement.executeUpdate();
+        }
+        catch (SQLException throwables) {
             throwables.printStackTrace();
         }
     }
@@ -215,7 +182,12 @@ public class MySqlDbManager extends DbManager {
                     results.put(i, columnName, resultSet.getString(j));
                 }
                 else if (columnType.isInstance(Timestamp.class)) {
-                    results.put(i, columnName, resultSet.getTimestamp(j));
+                    Timestamp ts = resultSet.getTimestamp(j);
+                    results.put(i, columnName, ts.toLocalDateTime());
+                }
+                else if (columnType.isInstance(Date.class)) {
+                    Date date = resultSet.getDate(j);
+                    results.put(i, columnName, date.toLocalDate());
                 }
                 else if (columnType.isInstance(Boolean.class)) {
                     results.put(i, columnName, resultSet.getBoolean(j));
@@ -235,19 +207,27 @@ public class MySqlDbManager extends DbManager {
     }
 
     @Override
-    public Table<Integer, String, Object> fetch(String table, Map<String, ?> match, Set<String> columns) {
-        String whereClause = generateSqlTests(match);
+    public Table<Integer, String, Object> fetch(String table, LinkedHashMap<String, ?> matches, Set<String> columns) {
+        StringBuilder matchStr = new StringBuilder();
+        for (String match : matches.keySet()) {
+            if (matchStr.length() != 0)
+                matchStr.append(" AND ");
+
+            matchStr.append(match);
+            matchStr.append("=?");
+        }
 
         String colsRaw = "*";
         if (columns != null)
-            colsRaw = generateColumnList(columns);
+            colsRaw = String.join(",", columns);
 
-        String query = String.format("SELECT %s FROM %s WHERE %s;", colsRaw, table, whereClause);
-        try (Statement statement = this.connection.createStatement()) {
-            if (statement.execute(query)) {
+        String query = String.format("SELECT %s FROM %s WHERE %s;", colsRaw, table, matchStr);
+        try (PreparedStatement statement = prepareStatement(query, matches)) {
+            if (statement.execute()) {
                 return parseResultSet(statement.getResultSet());
             }
-        } catch (SQLException throwables) {
+        }
+        catch (SQLException throwables) {
             throwables.printStackTrace();
         }
 
@@ -255,14 +235,30 @@ public class MySqlDbManager extends DbManager {
     }
 
     @Override
-    public void update(String table, Map<String, ?> values, Map<String, ?> match) {
-        String newValues   = generateSqlTests(values);
-        String whereClause = generateSqlTests(match);
+    public void update(String table, LinkedHashMap<String, ?> values, LinkedHashMap<String, ?> matches) {
+        StringBuilder updateStr = new StringBuilder();
+        for (String value : values.keySet()) {
+            if (updateStr.length() != 0)
+                updateStr.append(", ");
 
-        String query = String.format("UPDATE %s SET %s WHERE %s;", table, newValues, whereClause);
-        try (Statement statement = this.connection.createStatement()) {
-            statement.executeUpdate(query);
-        } catch (SQLException throwables) {
+            updateStr.append(value);
+            updateStr.append("=?");
+        }
+
+        StringBuilder matchStr = new StringBuilder();
+        for (String match : matches.keySet()) {
+            if (matchStr.length() != 0)
+                matchStr.append(" AND ");
+
+            matchStr.append(match);
+            matchStr.append("=?");
+        }
+
+        String query = String.format("UPDATE %s SET %s WHERE %s;", table, updateStr, matchStr);
+        try (PreparedStatement statement = prepareStatement(query, values, matches)) {
+            statement.executeUpdate();
+        }
+        catch (SQLException throwables) {
             throwables.printStackTrace();
         }
     }

@@ -21,7 +21,7 @@ public class MessageState {
      * @return          true if valid, false otherwise
      */
     public static boolean isFinal(String status) {
-        return !(status.equals(MessageState.DELIVERED)
+        return !(status.equals(MessageState.ACCEPTED)
                     || status.equals(MessageState.EN_ROUTE)
                     || status.equals(MessageState.UNKNOWN));
     }
@@ -43,6 +43,9 @@ public class MessageState {
      * @return          true if it is a valid MessageState, otherwise false
      */
     public static boolean isValid(String status) {
+        if (status == null)
+            return false;
+
         // all statuses are the same length, so it might save us a lot of comparisons
         if (status.length() != MessageState.ACCEPTED.length())
             return false;

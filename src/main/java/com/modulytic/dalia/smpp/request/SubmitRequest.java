@@ -6,6 +6,7 @@ import com.modulytic.dalia.smpp.api.SMSCAddress;
 import com.modulytic.dalia.ws.api.WsdMessage;
 import net.gescobar.smppserver.packet.SubmitSm;
 
+import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.TreeMap;
 import java.util.UUID;
@@ -87,7 +88,7 @@ public class SubmitRequest extends SubmitSm {
     }
 
     public void persistDLRParamsTo(DbManager database) {
-        Map<String, Object> values = new TreeMap<>();
+        LinkedHashMap<String, Object> values = new LinkedHashMap<>();
         values.put("msg_id", getMessageId());
         values.put("src_addr", getDestAddress());
         values.put("dst_addr", getSourceAddress());
