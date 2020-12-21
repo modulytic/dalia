@@ -5,10 +5,9 @@ import com.modulytic.dalia.local.include.DbManager;
 import com.modulytic.dalia.smpp.DaliaSessionBridge;
 import com.modulytic.dalia.smpp.DaliaSmppSessionListener;
 import com.modulytic.dalia.smpp.api.DeliveryReport;
-import com.modulytic.dalia.smpp.api.InvalidStatusException;
 import com.modulytic.dalia.smpp.api.MessageState;
 
-import java.sql.Timestamp;
+import java.time.LocalDateTime;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
@@ -110,16 +109,12 @@ public class DLRRequest {
     /**
      * Validate a new status and persist it to the database
      * @param status    valid {@link MessageState}
-     * @throws InvalidStatusException   if status is not a valid {@link MessageState}
      */
-    public void persistNewStatus(String status) throws InvalidStatusException {
-        if (!MessageState.isValid(status))
-            throw new InvalidStatusException(String.format("Invalid DLR status %s", status));
-
+    public void persistNewStatus(MessageState status) {
         if (this.database == null)
             return;
 
-        this.values.replace("msg_status", status);
+        this.values.replace("msg_status", status.toString());
         this.database.update(this.dbTable, this.values, getMatch());
     }
 
@@ -140,7 +135,8 @@ public class DLRRequest {
      * @return  true if it is wanted, otherwise false
      */
     public boolean clientWantsUpdate() {
-        String status = (String) this.values.get("msg_status");
+        String statusRaw = (String) this.values.get("msg_status");
+        MessageState status = MessageState.fromCode(statusRaw);
 
         boolean failureOnly  = (Boolean) this.values.get("failure_only");
         boolean intermediate = (Boolean) this.values.get("intermediate");
@@ -159,11 +155,12 @@ public class DLRRequest {
         if (this.values == null)
             return null;
 
-        String status = (String) this.values.get("msg_status");
+        String statusRaw = (String) this.values.get("msg_status");
+        MessageState status = MessageState.fromCode(statusRaw);
 
         DeliveryReport deliveryReport = new DeliveryReport();
         deliveryReport.setId((String) this.values.get("msg_id"));
-        deliveryReport.setSubmitDate((Timestamp) this.values.get("submit_date"));
+        deliveryReport.setSubmitDate((LocalDateTime) this.values.get("submit_date"));
         deliveryReport.setSourceAddr((String) this.values.get("src_addr"));
         deliveryReport.setDestAddr((String) this.values.get("dst_addr"));
         deliveryReport.setIsIntermediate(!MessageState.isFinal(status));

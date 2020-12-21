@@ -43,27 +43,24 @@ public class DaliaSmppRequestHandler extends SmppRequestHandler {
         this.updateHandler = handler;
     }
 
-    private void updateMessageStatus(String id, RegisteredDelivery registeredDelivery, String status) {
-        if (id == null || registeredDelivery == null || status == null)
+    private void updateMessageStatus(String id, RegisteredDelivery registeredDelivery, MessageState newStatus) {
+        if (id == null || registeredDelivery == null || newStatus == null)
             return;
 
         if (!registeredDelivery.getForwardDlrs())
             return;
 
-        if (!MessageState.isValid(status))
-            return;
-
         if (this.updateHandler == null)
             return;
 
-        if (registeredDelivery.getFailureOnly() && !MessageState.isError(status))
+        if (registeredDelivery.getFailureOnly() && !MessageState.isError(newStatus))
             return;
-        else if (!registeredDelivery.getIntermediate() && !MessageState.isFinal(status))
+        else if (!registeredDelivery.getIntermediate() && !MessageState.isFinal(newStatus))
             return;
-        else if (!registeredDelivery.getReceiveFinal() && MessageState.isFinal(status))
+        else if (!registeredDelivery.getReceiveFinal() && MessageState.isFinal(newStatus))
             return;
 
-        this.updateHandler.updateStatus(id, status);
+        this.updateHandler.updateStatus(id, newStatus);
     }
 
     /**

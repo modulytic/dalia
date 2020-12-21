@@ -3,7 +3,6 @@ package com.modulytic.dalia.smpp;
 import com.modulytic.dalia.local.MySqlDbManager;
 import com.modulytic.dalia.smpp.request.DLRRequest;
 import com.modulytic.dalia.smpp.api.DeliveryReport;
-import com.modulytic.dalia.smpp.api.InvalidStatusException;
 import com.modulytic.dalia.smpp.api.MessageState;
 import com.modulytic.dalia.ws.WsdServer;
 import org.slf4j.Logger;
@@ -32,22 +31,18 @@ public class DLRUpdateHandler {
      * @param messageId message assigned when submit_sm was received
      * @param status    new {@link MessageState status}
      */
-    public void updateStatus(String messageId, String status) {
+    public void updateStatus(String messageId, MessageState status) {
         DLRRequest request = new DLRRequest(messageId, this.database);
         if (request.existsInDb()) {
-            try {
-                request.persistNewStatus(status);
+            request.persistNewStatus(status);
 
-                if (request.clientWantsUpdate()) {
-                    DaliaSessionBridge bridge = request.getBridge(this.listener);
+            if (request.clientWantsUpdate()) {
+                DaliaSessionBridge bridge = request.getBridge(this.listener);
 
-                    if (bridge != null) {
-                        DeliveryReport deliveryReport = request.toDeliveryReport();
-                        bridge.sendPdu(deliveryReport.toDeliverSm());
-                    }
+                if (bridge != null) {
+                    DeliveryReport deliveryReport = request.toDeliveryReport();
+                    bridge.sendGescobarPdu(deliveryReport.toDeliverSm());
                 }
-            } catch (InvalidStatusException e) {
-                LOGGER.error(String.format("Received DLR update for message '%s', but new status '%s' is invalid", messageId, status));
             }
         }
         else {

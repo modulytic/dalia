@@ -38,22 +38,22 @@ class MessageStateTest {
     }
 
     @Test
-    void allValidStatesAreValid() {
-        assertTrue(MessageState.isValid(MessageState.EN_ROUTE));
-        assertTrue(MessageState.isValid(MessageState.DELIVERED));
-        assertTrue(MessageState.isValid(MessageState.UNKNOWN));
-        assertTrue(MessageState.isValid(MessageState.UNDELIVERABLE));
-        assertTrue(MessageState.isValid(MessageState.ACCEPTED));
-        assertTrue(MessageState.isValid(MessageState.DELETED));
-        assertTrue(MessageState.isValid(MessageState.EXPIRED));
-        assertTrue(MessageState.isValid(MessageState.REJECTED));
+    void invalidStatesAreCaught() {
+        assertNull(MessageState.fromCode(null));
+        assertNull(MessageState.fromCode(""));
+        assertNull(MessageState.fromCode("acceptd"));
+        assertNull(MessageState.fromCode("accepted"));
     }
 
     @Test
-    void invalidStatesAreCaught() {
-        assertFalse(MessageState.isValid(null));
-        assertFalse(MessageState.isValid(""));
-        assertFalse(MessageState.isValid("acceptd"));
-        assertFalse(MessageState.isValid("accepted"));
+    void statesAreConvertedToStrings() {
+        assertEquals(MessageState.ACCEPTED.toString(),      "ACCEPTD");
+        assertEquals(MessageState.DELETED.toString(),       "DELETED");
+        assertEquals(MessageState.DELIVERED.toString(),     "DELIVRD");
+        assertEquals(MessageState.EN_ROUTE.toString(),      "ENROUTE");
+        assertEquals(MessageState.EXPIRED.toString(),       "EXPIRED");
+        assertEquals(MessageState.REJECTED.toString(),      "REJECTD");
+        assertEquals(MessageState.UNDELIVERABLE.toString(), "UNDELIV");
+        assertEquals(MessageState.UNKNOWN.toString(),       "UNKNOWN");
     }
 }

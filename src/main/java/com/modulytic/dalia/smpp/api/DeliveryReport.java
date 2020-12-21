@@ -3,7 +3,7 @@ package com.modulytic.dalia.smpp.api;
 import net.gescobar.smppserver.packet.Address;
 import net.gescobar.smppserver.packet.DeliverSm;
 
-import java.sql.Timestamp;
+import java.time.LocalDateTime;
 
 /**
  * Class to build DLR PDU easily from raw Java data
@@ -24,17 +24,17 @@ public class DeliveryReport {
     /**
      * Date originally submitted
      */
-    private int submitDate;
+    private LocalDateTime submitDate;
 
     /**
      * Date final status was updated
      */
-    private final int doneDate;
+    private final LocalDateTime doneDate;
 
     /**
      * New status being sent
      */
-    private String status;
+    private MessageState status;
 
     /**
      * Error code, if any encountered
@@ -44,7 +44,7 @@ public class DeliveryReport {
     public DeliveryReport() {
         this.deliverSm = new DeliverSm();
 
-        this.doneDate = (int)(System.currentTimeMillis() / 1000);
+        this.doneDate = LocalDateTime.now();
 
         // set bit 2 of esm_class to mark as delivery report
         setEsmClassField(true, 2);
@@ -60,11 +60,10 @@ public class DeliveryReport {
 
     /**
      * Use SQL Timestamp to set the submit date of the original message
-     * @param submitDate    Timestamp of when message was submitted
+     * @param dt    Timestamp of when message was submitted
      */
-    public void setSubmitDate(Timestamp submitDate) {
-        // TODO fix this! it's not a Unix timestamp, see https://smpp.org/smpp-delivery-receipt.html
-        this.submitDate = (int)(submitDate.getTime() / 1000);
+    public void setSubmitDate(LocalDateTime dt) {
+        this.submitDate = dt;
     }
 
     /**
@@ -122,9 +121,8 @@ public class DeliveryReport {
      * Set status of DLR
      * @param status    valid {@link MessageState}
      */
-    public void setStatus(String status) {
-        if (MessageState.isValid(status))
-            this.status = status;
+    public void setStatus(MessageState status) {
+        this.status = status;
     }
 
     /**
@@ -132,11 +130,11 @@ public class DeliveryReport {
      * @return  {@link DeliverSm} PDU
      */
     public DeliverSm toDeliverSm() {
-        String sm = String.format("id:%s submit date:%d done date:%d stat:%s err:%d",
+        String sm = String.format("id:%s submit date:%s done date:%s stat:%s err:%d",
                                         this.id,
-                                        this.submitDate,
-                                        this.doneDate,
-                                        this.status,
+                                        SmppTimeHandler.formatAbsolute(this.submitDate),
+                                        SmppTimeHandler.formatAbsolute(this.doneDate),
+                                        this.status.toString(),
                                         this.error);
         this.deliverSm.setShortMessage(sm.getBytes());
 

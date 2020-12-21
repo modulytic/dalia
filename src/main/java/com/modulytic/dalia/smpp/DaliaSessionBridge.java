@@ -1,5 +1,6 @@
 package com.modulytic.dalia.smpp;
 
+import com.cloudhopper.smpp.pdu.Pdu;
 import com.modulytic.dalia.Constants;
 import net.gescobar.smppserver.SmppException;
 import net.gescobar.smppserver.SmppSession;
@@ -21,8 +22,8 @@ public class DaliaSessionBridge {
      * @param request   {@link SmppRequest request}
      * @return          response if received, otherwise null
      */
-    public SmppResponse sendPdu(SmppRequest request) {
-        return sendPdu(request, Constants.SMPP_REQUEST_TIMEOUT);
+    public SmppResponse sendGescobarPdu(SmppRequest request) {
+        return sendGescobarPdu(request, Constants.SMPP_REQUEST_TIMEOUT);
     }
 
     /**
@@ -31,7 +32,7 @@ public class DaliaSessionBridge {
      * @param timeout   timeout (millis)
      * @return          response if received, otherwise null
      */
-    public SmppResponse sendPdu(SmppRequest request, long timeout) {
+    public SmppResponse sendGescobarPdu(SmppRequest request, long timeout) {
         if (this.session.isBound()) {
             try {
                 return this.session.sendRequest(request, timeout);
@@ -42,5 +43,9 @@ public class DaliaSessionBridge {
         }
 
         return null;
+    }
+
+    // TODO implement this with query_sm_resp, cancel_sm_resp, replace_sm_resp
+    public void sendDaliaPdu() {
     }
 }

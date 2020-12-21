@@ -1,8 +1,7 @@
 package com.modulytic.dalia.ws;
 
-import com.modulytic.dalia.local.MySqlDbManager;
 import com.modulytic.dalia.smpp.DLRUpdateHandler;
-import com.modulytic.dalia.smpp.DaliaSmppSessionListener;
+import com.modulytic.dalia.smpp.api.MessageState;
 import com.modulytic.dalia.ws.api.WsdMessage;
 
 import java.util.Map;
@@ -31,8 +30,9 @@ public class WsdMessageHandler {
         switch (message.getName()) {
             case "dlr_update.php":              // legacy
             case "dlr_update": {
-                String id     = (String) params.get("id");
-                String status = (String) params.get("new_status");
+                String id           = (String) params.get("id");
+                String statusRaw    = (String) params.get("new_status");
+                MessageState status = MessageState.fromCode(statusRaw);
 
                 this.dlrUpdateHandler.updateStatus(id, status);
                 break;
