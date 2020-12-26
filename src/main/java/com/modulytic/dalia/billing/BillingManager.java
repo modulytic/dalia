@@ -1,7 +1,7 @@
 package com.modulytic.dalia.billing;
 
 import com.google.common.collect.Table;
-import com.modulytic.dalia.local.include.DbManager;
+import com.modulytic.dalia.DaliaContext;
 
 import java.util.LinkedHashMap;
 
@@ -10,21 +10,16 @@ import java.util.LinkedHashMap;
  * @author  <a href="mailto:noah@modulytic.com">Noah Sandman</a>
  */
 public class BillingManager {
-    private final DbManager database;
-    public BillingManager(DbManager database) {
-        this.database = database;
-    }
-
     // get currently active vRoute for a given country code
     public Vroute getActiveVroute(int countryCode) {
-        if (this.database == null)
+        if (DaliaContext.getDatabase() == null)
             return null;
 
         LinkedHashMap<String, Object> match = new LinkedHashMap<>();
         match.put("country_code", countryCode);
         match.put("is_active", true);
 
-        Table<Integer, String, Object> rs = this.database.fetch("billing_vroutes", match);
+        Table<Integer, String, Object> rs = DaliaContext.getDatabase().fetch("billing_vroutes", match);
         if (rs == null || rs.isEmpty())         // empty
             return null;
 
@@ -32,7 +27,7 @@ public class BillingManager {
     }
 
     public void logMessage(String messageId, String smppUser, int countryCode, Vroute vroute) {
-        if (this.database == null)
+        if (DaliaContext.getDatabase() == null)
             return;
 
         LinkedHashMap<String, Object> values = new LinkedHashMap<>();
@@ -45,6 +40,6 @@ public class BillingManager {
             values.put("rate", vroute.getRate());
         }
 
-        this.database.insert("billing_logs", values);
+        DaliaContext.getDatabase().insert("billing_logs", values);
     }
 }

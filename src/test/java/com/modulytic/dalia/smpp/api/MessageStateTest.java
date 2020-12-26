@@ -56,4 +56,9 @@ class MessageStateTest {
         assertEquals(MessageState.UNDELIVERABLE.toString(), "UNDELIV");
         assertEquals(MessageState.UNKNOWN.toString(),       "UNKNOWN");
     }
+
+    @Test
+    void statesAreCreatedFromStrings() {
+        assertEquals(MessageState.ACCEPTED, MessageState.fromCode("ACCEPTD"));
+    }
 }

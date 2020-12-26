@@ -3,6 +3,7 @@ package com.modulytic.dalia.smpp.api;
 import com.google.i18n.phonenumbers.NumberParseException;
 import com.google.i18n.phonenumbers.PhoneNumberUtil;
 import com.google.i18n.phonenumbers.Phonenumber.PhoneNumber;
+import com.modulytic.dalia.Constants;
 import net.gescobar.smppserver.packet.Address;
 
 /**
@@ -13,17 +14,17 @@ public class SMSCAddress extends Address {
     /**
      * Instance of libphonenumber, can format and parse numbers
      */
-    private PhoneNumberUtil phoneUtil = null;
+    private static final PhoneNumberUtil phoneUtil = PhoneNumberUtil.getInstance();
 
     /**
      * Result of parsing phone number with {@link this#phoneUtil}
      */
-    private PhoneNumber phoneNumber = null;
+    private PhoneNumber phoneNumber;
 
     /**
      * Whether or not the SMSC supports this format of number
      */
-    private boolean isSupported;
+    private boolean supported;
 
     public SMSCAddress(Address address) {
         super();
@@ -33,19 +34,16 @@ public class SMSCAddress extends Address {
         super.setTon(address.getTon());
 
         // if this number's TON or NPI is not supported, do not mark it as supported
-        this.isSupported = (isValidTon() && isValidNpi());
-        if (!isSupported())
+        this.supported = (isValidTon(address.getTon()) && isValidNpi(address.getNpi()));
+        if (!this.supported)
             return;
-
-        // set up our number parser and formatter
-        phoneUtil = PhoneNumberUtil.getInstance();
 
         // parse phone number and mark as invalid if there are any issues
         try {
-            this.phoneNumber = phoneUtil.parse(getAddress(), "US");
+            this.phoneNumber = phoneUtil.parse(getAddress(), Constants.DEFAULT_ADDRESS_REGION);
         }
         catch (NumberParseException e) {
-            this.isSupported = false;
+            this.supported = false;
         }
     }
 
@@ -54,7 +52,7 @@ public class SMSCAddress extends Address {
      * @return  true if it is supported, otherwise false
      */
     public boolean isValidTon() {
-        return (getTon() == TON.INTERNATIONAL || getTon() == TON.NATIONAL);
+        return isValidTon(getTon());
     }
 
     /**
@@ -62,15 +60,23 @@ public class SMSCAddress extends Address {
      * @return  true if it is supported, otherwise false
      */
     public boolean isValidNpi() {
-        return (getNpi() == NPI.E164 || getNpi() == NPI.NATIONAL);
+        return isValidNpi(getNpi());
+    }
+
+    private static boolean isValidTon(byte ton) {
+        return (ton == TON.INTERNATIONAL || ton == TON.NATIONAL);
+    }
+
+    private static boolean isValidNpi(byte npi) {
+        return (npi == NPI.E164 || npi == NPI.NATIONAL);
     }
 
     /**
      * If the SMSC supported this address's format
      * @return  true if it is supported, otherwise false
      */
-    public boolean isSupported() {
-        return this.isSupported;
+    public boolean getSupported() {
+        return this.supported;
     }
 
     /**
@@ -78,7 +84,7 @@ public class SMSCAddress extends Address {
      * @return  country code if supported, null if not
      */
     public Integer getCountryCode() {
-        if (!isSupported())
+        if (!getSupported())
             return null;
 
         return this.phoneNumber.getCountryCode();
@@ -89,9 +95,9 @@ public class SMSCAddress extends Address {
      * @return  phone string in E164 format if supported, null if not
      */
     public String toE164() {
-        if (!isSupported())
+        if (!getSupported())
             return null;
 
-        return this.phoneUtil.format(this.phoneNumber, PhoneNumberUtil.PhoneNumberFormat.E164);
+        return phoneUtil.format(this.phoneNumber, PhoneNumberUtil.PhoneNumberFormat.E164);
     }
 }

@@ -2,38 +2,46 @@ package com.modulytic.dalia;
 
 import com.cloudhopper.smpp.type.SmppChannelException;
 import com.modulytic.dalia.local.MySqlDbManager;
+import com.modulytic.dalia.local.include.DbConstants;
 import com.modulytic.dalia.smpp.DLRUpdateHandler;
 import com.modulytic.dalia.smpp.DaliaPacketProcessor;
 import com.modulytic.dalia.smpp.DaliaSmppSessionListener;
-import com.modulytic.dalia.ws.WsdMessageHandler;
 import com.modulytic.dalia.ws.WsdServer;
 import com.modulytic.dalia.ws.WsdServerThread;
 import net.gescobar.smppserver.SmppServer;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Main class, entrypoint into program
  * @author  <a href="mailto:noah@modulytic.com">Noah Sandman</a>
  */
 public class Main {
+    private static final Logger LOGGER = LoggerFactory.getLogger(Main.class);
+
     public static void main(String[] args) {
         // MySQL database
-        MySqlDbManager database = new MySqlDbManager(Constants.DB_USERNAME, Constants.DB_PASSWORD);
+        final MySqlDbManager database = new MySqlDbManager(DbConstants.USERNAME, DbConstants.PASSWORD);
+        DaliaContext.setDatabase(database);
+
+        // listener for new SMPP sessions
+        final DaliaSmppSessionListener sessionListener = new DaliaSmppSessionListener();
+        DaliaContext.setSessionListener(sessionListener);
 
         // SMPP server
-        DaliaSmppSessionListener sessionListener = new DaliaSmppSessionListener();
-        DaliaPacketProcessor packetProcessor = new DaliaPacketProcessor(sessionListener, database);
+        final DaliaPacketProcessor packetProcessor = new DaliaPacketProcessor();
         SmppServer smppServer = new SmppServer(Constants.SMPP_HOST_PORT, packetProcessor);
 
+        // Handler for incoming message state updates
+        final DLRUpdateHandler updateHandler = new DLRUpdateHandler();
+        DaliaContext.setDLRUpdateHandler(updateHandler);
+
         // Externally-accessible WebSockets server
-        DLRUpdateHandler updateHandler = new DLRUpdateHandler(database, sessionListener);
-        packetProcessor.setDlrUpdateHandler(updateHandler);
-        WsdMessageHandler wsdMessageHandler = new WsdMessageHandler(updateHandler);
-        WsdServer wsdServer = new WsdServer(Constants.WS_HOST_PORT);
-        wsdServer.setHandler(wsdMessageHandler);
-        packetProcessor.setWsdServer(wsdServer);                // give packet processor access to server
+        final WsdServer wsdServer = new WsdServer(Constants.WS_HOST_PORT);
+        DaliaContext.setWsdServer(wsdServer);
         new WsdServerThread(wsdServer).start();                 // .run() is blocking so we run the WS server on a new thread
 
-        smppServer.setSessionListener(sessionListener);
+        smppServer.setSessionListener(DaliaContext.getSessionListener());
         try {
             // when this program dies, free our resources
             Runtime.getRuntime().addShutdownHook(new Thread(() -> {
@@ -43,7 +51,7 @@ public class Main {
 
             smppServer.start();
         } catch (SmppChannelException e) {
-            e.printStackTrace();
+            LOGGER.error(e.getMessage());
         }
     }
 }

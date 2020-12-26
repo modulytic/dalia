@@ -1,6 +1,6 @@
 package com.modulytic.dalia.smpp.include;
 
-import com.modulytic.dalia.smpp.DaliaSmppSessionListener;
+import com.modulytic.dalia.DaliaContext;
 import com.modulytic.dalia.smpp.request.SubmitRequest;
 import net.gescobar.smppserver.Response;
 import net.gescobar.smppserver.ResponseSender;
@@ -13,26 +13,17 @@ import org.slf4j.LoggerFactory;
  * @author  <a href="mailto:noah@modulytic.com">Noah Sandman</a>
  */
 public abstract class SmppRequestHandler {
-    private DaliaSmppSessionListener listener = null;
-    private SmppAuthenticator auth = null;
+    private SmppAuthenticator authenticator;
     private String smppUser;
 
-    protected final Logger LOGGER = LoggerFactory.getLogger(SmppRequestHandler.class);
-
-    /**
-     * Setter for DaliaSmppSessionListener, so we can know which sessions are connected and access them
-     * @param listener  DaliaSmppSessionListener
-     */
-    public void setListener(DaliaSmppSessionListener listener) {
-        this.listener = listener;
-    }
+    protected static final Logger LOGGER = LoggerFactory.getLogger(SmppRequestHandler.class);
 
     /**
      * Setter for SMPP authenticator, credentials are passed to this for a response
-     * @param authenticator ? extends SmppAuthenticator
+     * @param auth ? extends SmppAuthenticator
      */
-    public void setAuthenticator(SmppAuthenticator authenticator) {
-        this.auth = authenticator;
+    public void setAuthenticator(SmppAuthenticator auth) {
+        this.authenticator = auth;
     }
 
     /**
@@ -42,7 +33,7 @@ public abstract class SmppRequestHandler {
      */
     public void onSmppRequest(SmppRequest req, ResponseSender res) {
         // make sure listener is defined
-        if (this.listener == null) {
+        if (DaliaContext.getSessionListener() == null) {
             LOGGER.error("Fatal error: No listener specified in request router!!!");
             res.send(Response.SYSTEM_ERROR);
             return;
@@ -51,32 +42,40 @@ public abstract class SmppRequestHandler {
         if (req.isBind()) {
             this.onBind((Bind) req, res);
         }
-        else if (req.getCommandId() == SmppPacket.UNBIND) {
-            this.onUnBind(res);
-        }
-        else if (req.getCommandId() == SmppPacket.ENQUIRE_LINK) {
-            this.onEnquireLink(res);
-        }
         else if (req.isSubmitSm()) {
             SubmitRequest submitRequest = new SubmitRequest((SubmitSm) req);
             submitRequest.setSmppUser(this.smppUser);
 
             this.onSubmitSm(submitRequest, res);
         }
-        else if (req.getCommandId() == SmppPacket.CANCEL_SM) {
-            this.onCancelSm(req, res);
-        }
-        else if (req.getCommandId() == SmppPacket.QUERY_SM) {
-            this.onQuerySm(req, res);
-        }
-        else if (req.getCommandId() == SmppPacket.REPLACE_SM) {
-            this.onReplaceSm(req, res);
-        }
-        else if (req.getCommandId() == SmppPacket.SUBMIT_MULTI) {
-            this.onSubmitMulti(req, res);
-        }
-        else {
-            res.send(Response.INVALID_COMMAND_ID);
+        else switch (req.getCommandId()) {
+            case SmppPacket.UNBIND:
+                this.onUnBind(res);
+                break;
+
+            case SmppPacket.ENQUIRE_LINK:
+                this.onEnquireLink(res);
+                break;
+
+            case SmppPacket.CANCEL_SM:
+                this.onCancelSm(req, res);
+                break;
+
+            case SmppPacket.QUERY_SM:
+                this.onQuerySm(req, res);
+                break;
+
+            case SmppPacket.REPLACE_SM:
+                this.onReplaceSm(req, res);
+                break;
+
+            case SmppPacket.SUBMIT_MULTI:
+                this.onSubmitMulti(req, res);
+                break;
+
+            default:
+                res.send(Response.INVALID_COMMAND_ID);
+                break;
         }
     }
 
@@ -94,9 +93,9 @@ public abstract class SmppRequestHandler {
      *
      * @param bind  bind packet
      */
-    public void onBind(Bind bind, ResponseSender responseSender) {
+    private void onBind(Bind bind, ResponseSender responseSender) {
         // if no authenticator, always fail
-        if (this.auth == null) {
+        if (authenticator == null) {
             LOGGER.error("Cannot authenticate user: no authenticator defined in request router!!!");
             responseSender.send(Response.BIND_FAILED);
             return;
@@ -106,15 +105,15 @@ public abstract class SmppRequestHandler {
         this.smppUser = systemId;
 
         // do not attempt authentication if already bound
-        if (this.listener.getSessionBridge(systemId) != null) {
+        if (DaliaContext.getSessionListener().getSessionBridge(systemId) != null) {
             responseSender.send(Response.ALREADY_BOUND);
             return;
         }
 
-        Response authResponse = this.auth.auth(systemId, bind.getPassword());
+        Response authResponse = this.authenticator.auth(systemId, bind.getPassword());
         if (authResponse == Response.OK) {
             // let the rest of the system know we are successfully bound
-            this.listener.activateSession(systemId);
+            DaliaContext.getSessionListener().activateSession(systemId);
             onAuthSuccess(systemId);
         }
         else {

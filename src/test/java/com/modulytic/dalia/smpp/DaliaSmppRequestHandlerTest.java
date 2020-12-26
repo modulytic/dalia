@@ -1,5 +1,6 @@
 package com.modulytic.dalia.smpp;
 
+import com.modulytic.dalia.DaliaContext;
 import com.modulytic.dalia.local.include.DbManager;
 import com.modulytic.dalia.smpp.api.SMSCAddress;
 import com.modulytic.dalia.smpp.request.SubmitRequest;
@@ -10,6 +11,7 @@ import com.modulytic.dalia.ws.include.WsdStatusListener;
 import net.gescobar.smppserver.Response;
 import net.gescobar.smppserver.ResponseSender;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.BeforeEach;
 import org.mockito.ArgumentCaptor;
 
 import java.util.LinkedHashMap;
@@ -18,12 +20,24 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
 class DaliaSmppRequestHandlerTest {
+    DaliaSmppRequestHandler handler;
+    DbManager database;
+    WsdServer server;
+
+    @BeforeEach
+    void setup() {
+        handler = new DaliaSmppRequestHandler();
+        database = mock(DbManager.class);
+        server = mock(WsdServer.class);
+
+        DaliaContext.setDatabase(database);
+        DaliaContext.setWsdServer(server);
+    }
+
     @Test
     void submitSmUnsupportedNPI() {
-        DaliaSmppRequestHandler handler = new DaliaSmppRequestHandler(null);
-
         SMSCAddress address = mock(SMSCAddress.class);
-        when(address.isSupported()).thenReturn(true);
+        when(address.getSupported()).thenReturn(true);
         when(address.isValidNpi()).thenReturn(false);
         when(address.isValidTon()).thenReturn(true);
 
@@ -40,10 +54,8 @@ class DaliaSmppRequestHandlerTest {
 
     @Test
     void submitSmUnsupportedTON() {
-        DaliaSmppRequestHandler handler = new DaliaSmppRequestHandler(null);
-
         SMSCAddress address = mock(SMSCAddress.class);
-        when(address.isSupported()).thenReturn(true);
+        when(address.getSupported()).thenReturn(true);
         when(address.isValidNpi()).thenReturn(true);
         when(address.isValidTon()).thenReturn(false);
 
@@ -60,10 +72,8 @@ class DaliaSmppRequestHandlerTest {
 
     @Test
     void submitSmUnsupportedDestAddress() {
-        DaliaSmppRequestHandler handler = new DaliaSmppRequestHandler(null);
-
         SMSCAddress address = mock(SMSCAddress.class);
-        when(address.isSupported()).thenReturn(false);
+        when(address.getSupported()).thenReturn(false);
         when(address.isValidNpi()).thenReturn(true);
         when(address.isValidTon()).thenReturn(true);
 
@@ -80,13 +90,8 @@ class DaliaSmppRequestHandlerTest {
 
     @Test
     void submitSmCallsDatabaseAndWebsocket() {
-        DbManager database = mock(DbManager.class);
-        WsdServer server = mock(WsdServer.class);
-        DaliaSmppRequestHandler handler = new DaliaSmppRequestHandler(database);
-        handler.setWsdServer(server);
-
         SMSCAddress address = mock(SMSCAddress.class);
-        when(address.isSupported()).thenReturn(true);
+        when(address.getSupported()).thenReturn(true);
         when(address.isValidNpi()).thenReturn(true);
         when(address.isValidTon()).thenReturn(true);
 
@@ -105,7 +110,6 @@ class DaliaSmppRequestHandlerTest {
     void submitSmReturnsNoClientsError() {
         ResponseSender res = mock(ResponseSender.class);
 
-        WsdServer server = mock(WsdServer.class);
         doAnswer(invocation -> {
             Object[] args = invocation.getArguments();
             WsdStatusListener listener = (WsdStatusListener) args[1];
@@ -118,11 +122,10 @@ class DaliaSmppRequestHandlerTest {
             return null;
         }).when(server).sendNext(any(WsdMessage.class), any(WsdStatusListener.class));
 
-        DaliaSmppRequestHandler handler = new DaliaSmppRequestHandler(null);
-        handler.setWsdServer(server);
+        DaliaSmppRequestHandler handler = new DaliaSmppRequestHandler();
 
         SMSCAddress address = mock(SMSCAddress.class);
-        when(address.isSupported()).thenReturn(true);
+        when(address.getSupported()).thenReturn(true);
         when(address.isValidNpi()).thenReturn(true);
         when(address.isValidTon()).thenReturn(true);
         when(address.getCountryCode()).thenReturn(1);
@@ -150,11 +153,10 @@ class DaliaSmppRequestHandlerTest {
             return null;
         }).when(server).sendNext(any(WsdMessage.class), any(WsdStatusListener.class));
 
-        DaliaSmppRequestHandler handler = new DaliaSmppRequestHandler(null);
-        handler.setWsdServer(server);
+        DaliaSmppRequestHandler handler = new DaliaSmppRequestHandler();
 
         SMSCAddress address = mock(SMSCAddress.class);
-        when(address.isSupported()).thenReturn(true);
+        when(address.getSupported()).thenReturn(true);
         when(address.isValidNpi()).thenReturn(true);
         when(address.isValidTon()).thenReturn(true);
         when(address.getCountryCode()).thenReturn(1);
@@ -169,7 +171,6 @@ class DaliaSmppRequestHandlerTest {
     void submitSmReturnsSuccessOnWsDaemonSuccess() {
         ResponseSender res = mock(ResponseSender.class);
 
-        WsdServer server = mock(WsdServer.class);
         doAnswer(invocation -> {
             Object[] args = invocation.getArguments();
             WsdStatusListener listener = (WsdStatusListener) args[1];
@@ -182,11 +183,10 @@ class DaliaSmppRequestHandlerTest {
             return null;
         }).when(server).sendNext(any(WsdMessage.class), any(WsdStatusListener.class));
 
-        DaliaSmppRequestHandler handler = new DaliaSmppRequestHandler(null);
-        handler.setWsdServer(server);
+        DaliaSmppRequestHandler handler = new DaliaSmppRequestHandler();
 
         SMSCAddress address = mock(SMSCAddress.class);
-        when(address.isSupported()).thenReturn(true);
+        when(address.getSupported()).thenReturn(true);
         when(address.isValidNpi()).thenReturn(true);
         when(address.isValidTon()).thenReturn(true);
         when(address.getCountryCode()).thenReturn(1);
@@ -199,8 +199,6 @@ class DaliaSmppRequestHandlerTest {
 
     @Test
     void submitSmCanPersistDlrToDatabase() {
-        DbManager database = mock(DbManager.class);
-        WsdServer server = mock(WsdServer.class);
         // tell Dalia message was sent successfully
         doAnswer(invocation -> {
             Object[] args = invocation.getArguments();
@@ -209,11 +207,10 @@ class DaliaSmppRequestHandlerTest {
             return null;
         }).when(server).sendNext(any(WsdMessage.class), any(WsdStatusListener.class));
 
-        DaliaSmppRequestHandler handler = new DaliaSmppRequestHandler(database);
-        handler.setWsdServer(server);
+        DaliaSmppRequestHandler handler = new DaliaSmppRequestHandler();
 
         SMSCAddress address = mock(SMSCAddress.class);
-        when(address.isSupported()).thenReturn(true);
+        when(address.getSupported()).thenReturn(true);
         when(address.isValidNpi()).thenReturn(true);
         when(address.isValidTon()).thenReturn(true);
 

@@ -1,23 +1,28 @@
 package com.modulytic.dalia.smpp.api;
 
-
-import com.modulytic.dalia.include.BiHashMap;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * Possible states for a message, used in DLRs or Query_SMs
  * @author  <a href="mailto:noah@modulytic.com">Noah Sandman</a>
  */
 public enum MessageState {
-    ACCEPTED,
-    UNDELIVERABLE,
-    REJECTED,
-    DELIVERED,
-    EXPIRED,
-    DELETED,
-    EN_ROUTE,
-    UNKNOWN;
+    ACCEPTED("ACCEPTD"),
+    UNDELIVERABLE("UNDELIV"),
+    REJECTED("REJECTD"),
+    DELIVERED("DELIVRD"),
+    EXPIRED("EXPIRED"),
+    DELETED("DELETED"),
+    EN_ROUTE("ENROUTE"),
+    UNKNOWN("UNKNOWN");
 
-    private BiHashMap<MessageState, String> codeMappings = new BiHashMap<>();
+    private static final Map<String, MessageState> values = new ConcurrentHashMap<>();
+
+    final private String state;
+    MessageState(String state) {
+        this.state = state;
+    }
 
     /**
      * Check if message status is final. Does NOT check if status is valid!
@@ -41,32 +46,20 @@ public enum MessageState {
                     || status.equals(EXPIRED));
     }
 
-    private static BiHashMap<MessageState, String> getCodeMappings() {
-        BiHashMap<MessageState, String> codeMappings = new BiHashMap<>();
-        codeMappings.put(ACCEPTED,      "ACCEPTD");
-        codeMappings.put(UNDELIVERABLE, "UNDELIV");
-        codeMappings.put(REJECTED,      "REJECTD");
-        codeMappings.put(DELIVERED,     "DELIVRD");
-        codeMappings.put(EXPIRED,       "EXPIRED");
-        codeMappings.put(DELETED,       "DELETED");
-        codeMappings.put(EN_ROUTE,      "ENROUTE");
-        codeMappings.put(UNKNOWN,       "UNKNOWN");
-
-        return codeMappings;
+    @Override
+    public String toString() {
+        return this.state;
     }
 
     public static MessageState fromCode(String code) {
         if (code == null)
             return null;
 
-        return getCodeMappings().getBackward(code);
-    }
+        if (values.isEmpty()) {
+            for (MessageState state : MessageState.values())
+                values.put(state.toString(), state);
+        }
 
-    @Override
-    public String toString() {
-        if (codeMappings.isEmpty())
-            codeMappings = getCodeMappings();
-
-        return codeMappings.getForward(this);
+        return values.get(code);
     }
 }

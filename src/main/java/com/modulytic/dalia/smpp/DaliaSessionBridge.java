@@ -1,20 +1,22 @@
 package com.modulytic.dalia.smpp;
 
-import com.cloudhopper.smpp.pdu.Pdu;
 import com.modulytic.dalia.Constants;
 import net.gescobar.smppserver.SmppException;
 import net.gescobar.smppserver.SmppSession;
 import net.gescobar.smppserver.packet.SmppRequest;
 import net.gescobar.smppserver.packet.SmppResponse;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Tools to interact with an SMPP session/ESME easily from Java
  * @author <a href="mailto:noah@modulytic.com">Noah Sandman</a>
  */
 public class DaliaSessionBridge {
+    protected static final Logger LOGGER = LoggerFactory.getLogger(DaliaSessionBridge.class);
     private final SmppSession session;
-    public DaliaSessionBridge(SmppSession session) {
-        this.session = session;
+    public DaliaSessionBridge(SmppSession sess) {
+        session = sess;
     }
 
     /**
@@ -33,12 +35,12 @@ public class DaliaSessionBridge {
      * @return          response if received, otherwise null
      */
     public SmppResponse sendGescobarPdu(SmppRequest request, long timeout) {
-        if (this.session.isBound()) {
+        if (session.isBound()) {
             try {
-                return this.session.sendRequest(request, timeout);
+                return session.sendRequest(request, timeout);
             }
             catch (SmppException e) {
-                e.printStackTrace();
+                LOGGER.error(e.getMessage());
             }
         }
 

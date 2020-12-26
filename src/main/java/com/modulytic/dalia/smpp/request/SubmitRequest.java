@@ -8,11 +8,11 @@ import net.gescobar.smppserver.packet.SubmitSm;
 
 import java.util.LinkedHashMap;
 import java.util.Map;
-import java.util.TreeMap;
 import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
 
 public class SubmitRequest extends SubmitSm {
-    private final RegisteredDelivery registeredDelivery;
+    private final RegisteredDelivery daliaRegisteredDelivery;
 
     private SMSCAddress src;
     private SMSCAddress dest;
@@ -39,7 +39,7 @@ public class SubmitRequest extends SubmitSm {
         super.setValidityPeriod(submitSm.getValidityPeriod());
 
         this.messageId = UUID.randomUUID().toString();
-        this.registeredDelivery = new RegisteredDelivery(getRegisteredDelivery());
+        this.daliaRegisteredDelivery = new RegisteredDelivery(getRegisteredDelivery());
     }
 
     public void setSmppUser(String sysId) {
@@ -71,20 +71,24 @@ public class SubmitRequest extends SubmitSm {
     }
 
     public boolean getShouldForwardDLRs() {
-        return this.registeredDelivery.getForwardDlrs();
+        return this.daliaRegisteredDelivery.getForwardDlrs();
     }
 
     @SuppressWarnings("unused")
     public boolean getWantsAllFinalStatuses() {
-        return this.registeredDelivery.getReceiveFinal();
+        return this.daliaRegisteredDelivery.getReceiveFinal();
     }
 
     public boolean getWantsFailureStatusesOnly() {
-        return this.registeredDelivery.getFailureOnly();
+        return this.daliaRegisteredDelivery.getFailureOnly();
     }
 
     public boolean getWantsIntermediateStatuses() {
-        return this.registeredDelivery.getIntermediate();
+        return this.daliaRegisteredDelivery.getIntermediate();
+    }
+
+    public RegisteredDelivery getDaliaRegisteredDelivery() {
+        return daliaRegisteredDelivery;
     }
 
     public void persistDLRParamsTo(DbManager database) {
@@ -104,7 +108,7 @@ public class SubmitRequest extends SubmitSm {
      * @return  {@link WsdMessage}
      */
     public WsdMessage toEndpointRequest() {
-        Map<String, Object> sendParams = new TreeMap<>();
+        Map<String, Object> sendParams = new ConcurrentHashMap<>();
         sendParams.put("to", getDestAddress().toE164());
         sendParams.put("content", getShortMessage());
         sendParams.put("id", getMessageId());

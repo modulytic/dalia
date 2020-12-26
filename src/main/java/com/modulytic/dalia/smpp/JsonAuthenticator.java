@@ -4,6 +4,8 @@ import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 import com.modulytic.dalia.smpp.include.SmppAuthenticator;
 import net.gescobar.smppserver.Response;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.lang.reflect.Type;
@@ -26,6 +28,7 @@ import java.util.Map;
  * @author  <a href="mailto:noah@modulytic.com">Noah Sandman</a>
  */
 public class JsonAuthenticator extends SmppAuthenticator {
+    private static final Logger LOGGER = LoggerFactory.getLogger(JsonAuthenticator.class);
     /**
      * HashMap of credentials, stored in format (K, V): (username, password)
      */
@@ -36,14 +39,14 @@ public class JsonAuthenticator extends SmppAuthenticator {
      * @param filePath  path to valid JSON data
      * @return          HashMap that can be accepted by {@link #JsonAuthenticator(Map)}
      */
-    private static HashMap<String, String> pathToCredentialsMap(String filePath) {
+    private static Map<String, String> pathToCredentialsMap(String filePath) {
         try {
             String content = new String(Files.readAllBytes(Paths.get(filePath)));
 
             Type hashMapType = new TypeToken<HashMap<String, String>>(){}.getType();
             return new Gson().fromJson(content, hashMapType);
         } catch (IOException e) {
-            e.printStackTrace();
+            LOGGER.error(e.getMessage());
         }
 
         return null;

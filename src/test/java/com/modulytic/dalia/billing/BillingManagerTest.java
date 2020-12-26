@@ -2,6 +2,7 @@ package com.modulytic.dalia.billing;
 
 import com.google.common.collect.Table;
 import com.google.common.collect.TreeBasedTable;
+import com.modulytic.dalia.DaliaContext;
 import com.modulytic.dalia.local.include.DbManager;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
@@ -16,8 +17,9 @@ class BillingManagerTest {
     void getNullVroute() {
         DbManager database = mock(DbManager.class);
         when(database.fetch(anyString(), any(LinkedHashMap.class))).thenReturn(null);
+        DaliaContext.setDatabase(database);
 
-        BillingManager bm = new BillingManager(database);
+        BillingManager bm = new BillingManager();
         assertNull(bm.getActiveVroute(1));
     }
 
@@ -32,8 +34,9 @@ class BillingManagerTest {
 
         DbManager database = mock(DbManager.class);
         when(database.fetch(anyString(), any(LinkedHashMap.class))).thenReturn(vrouteResult);
+        DaliaContext.setDatabase(database);
 
-        BillingManager bm = new BillingManager(database);
+        BillingManager bm = new BillingManager();
         Vroute vroute = bm.getActiveVroute(1);
         assertNotNull(vroute);
 
@@ -53,8 +56,9 @@ class BillingManagerTest {
 
         DbManager database = mock(DbManager.class);
         when(database.fetch(anyString(), any(LinkedHashMap.class))).thenReturn(vrouteResult);
+        DaliaContext.setDatabase(database);
 
-        BillingManager bm = new BillingManager(database);
+        BillingManager bm = new BillingManager();
         assertNull(bm.getActiveVroute(1));
 
         ArgumentCaptor<LinkedHashMap<String, Object>> argument = ArgumentCaptor.forClass(LinkedHashMap.class);

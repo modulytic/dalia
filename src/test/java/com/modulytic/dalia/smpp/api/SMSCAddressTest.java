@@ -13,7 +13,7 @@ class SMSCAddressTest {
         when(address.getAddress()).thenReturn("8");
 
         SMSCAddress smscAddress = new SMSCAddress(address);
-        assertFalse(smscAddress.isSupported());
+        assertFalse(smscAddress.getSupported());
     }
 
     @Test
@@ -24,7 +24,7 @@ class SMSCAddressTest {
         when(address.getNpi()).thenReturn(NPI.E164);
 
         SMSCAddress smscAddress = new SMSCAddress(address);
-        assertFalse(smscAddress.isSupported());
+        assertFalse(smscAddress.getSupported());
         assertFalse(smscAddress.isValidTon());
         assertTrue(smscAddress.isValidNpi());
     }
@@ -37,7 +37,7 @@ class SMSCAddressTest {
         when(address.getNpi()).thenReturn(NPI.PRIVATE);
 
         SMSCAddress smscAddress = new SMSCAddress(address);
-        assertFalse(smscAddress.isSupported());
+        assertFalse(smscAddress.getSupported());
         assertFalse(smscAddress.isValidTon());
         assertFalse(smscAddress.isValidNpi());
     }
@@ -50,7 +50,7 @@ class SMSCAddressTest {
         when(address.getNpi()).thenReturn(NPI.E164);
 
         SMSCAddress smscAddress = new SMSCAddress(address);
-        assertTrue(smscAddress.isSupported());
+        assertTrue(smscAddress.getSupported());
         assertTrue(smscAddress.isValidTon());
         assertTrue(smscAddress.isValidNpi());
     }
@@ -85,7 +85,7 @@ class SMSCAddressTest {
         when(address.getNpi()).thenReturn(NPI.NATIONAL);
 
         SMSCAddress smscAddress = new SMSCAddress(address);
-        assertTrue(smscAddress.isSupported());
+        assertTrue(smscAddress.getSupported());
         assertEquals("+15558693564", smscAddress.toE164());
     }
 }

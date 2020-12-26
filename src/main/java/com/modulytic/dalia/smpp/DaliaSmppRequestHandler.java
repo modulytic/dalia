@@ -1,14 +1,13 @@
 package com.modulytic.dalia.smpp;
 
+import com.modulytic.dalia.DaliaContext;
 import com.modulytic.dalia.billing.Vroute;
 import com.modulytic.dalia.billing.BillingManager;
-import com.modulytic.dalia.local.include.DbManager;
 import com.modulytic.dalia.smpp.api.MessageState;
 import com.modulytic.dalia.smpp.api.RegisteredDelivery;
 import com.modulytic.dalia.smpp.request.SubmitRequest;
 import com.modulytic.dalia.smpp.api.SMSCAddress;
 import com.modulytic.dalia.smpp.include.SmppRequestHandler;
-import com.modulytic.dalia.ws.WsdServer;
 import com.modulytic.dalia.ws.api.WsdMessageCode;
 import com.modulytic.dalia.ws.include.WsdStatusListener;
 import net.gescobar.smppserver.Response;
@@ -20,29 +19,6 @@ import net.gescobar.smppserver.packet.SmppRequest;
  * @author  <a href="mailto:noah@modulytic.com">Noah Sandman</a>
  */
 public class DaliaSmppRequestHandler extends SmppRequestHandler {
-    /**
-     * Active database connection
-     */
-    private final DbManager database;
-
-    private WsdServer wsdServer;
-
-    private DLRUpdateHandler updateHandler;
-
-    /**
-     * Constructor
-     * @param database  Active database connection
-     */
-    public DaliaSmppRequestHandler(DbManager database) {
-        super();
-
-        this.database = database;
-    }
-
-    public void setUpdateHandler(DLRUpdateHandler handler) {
-        this.updateHandler = handler;
-    }
-
     private void updateMessageStatus(String id, RegisteredDelivery registeredDelivery, MessageState newStatus) {
         if (id == null || registeredDelivery == null || newStatus == null)
             return;
@@ -50,7 +26,7 @@ public class DaliaSmppRequestHandler extends SmppRequestHandler {
         if (!registeredDelivery.getForwardDlrs())
             return;
 
-        if (this.updateHandler == null)
+        if (DaliaContext.getDLRUpdateHandler() == null)
             return;
 
         if (registeredDelivery.getFailureOnly() && !MessageState.isError(newStatus))
@@ -60,15 +36,7 @@ public class DaliaSmppRequestHandler extends SmppRequestHandler {
         else if (!registeredDelivery.getReceiveFinal() && MessageState.isFinal(newStatus))
             return;
 
-        this.updateHandler.updateStatus(id, newStatus);
-    }
-
-    /**
-     * Pass WebSocket server to request router so we can send client messages
-     * @param server    WebSocket server
-     */
-    public void setWsdServer(WsdServer server) {
-        this.wsdServer = server;
+        DaliaContext.getDLRUpdateHandler().updateStatus(id, newStatus);
     }
 
     @Override
@@ -95,37 +63,37 @@ public class DaliaSmppRequestHandler extends SmppRequestHandler {
             responseSender.send(Response.INVALID_DESTINATION_TON);
             return;
         }
-        else if (!dest.isSupported()) {
+        else if (!dest.getSupported()) {
             responseSender.send(Response.INVALID_DEST_ADDRESS);
             return;
         }
 
-        final RegisteredDelivery registeredDelivery = new RegisteredDelivery(submitSm.getRegisteredDelivery());
-
         // save message to our database for billing purposes
-        BillingManager billingManager = new BillingManager(this.database);
+        BillingManager billingManager = new BillingManager();
         Vroute vroute = billingManager.getActiveVroute(dest.getCountryCode());
         billingManager.logMessage(submitSm.getMessageId(), getSmppUser(), dest.getCountryCode(), vroute);
 
-        // no clients are available to take the message
         WsdStatusListener listener = new WsdStatusListener() {
             @Override
             public void onStatus(int status) {
                 if (status == WsdMessageCode.SUCCESS) {
                     LOGGER.info(String.format("Message '%s' successfully sent", submitSm.getMessageId()));
                     if (submitSm.getShouldForwardDLRs()) {
-                        submitSm.persistDLRParamsTo(database);
+                        submitSm.persistDLRParamsTo(DaliaContext.getDatabase());
 
                         // if intermediate DLRs requested, send accepted/en_route
-                        updateMessageStatus(submitSm.getMessageId(), registeredDelivery, MessageState.EN_ROUTE);
+                        updateMessageStatus(submitSm.getMessageId(), submitSm.getDaliaRegisteredDelivery(), MessageState.EN_ROUTE);
                     }
 
                     responseSender.send(response);
                 }
+
+                // no clients are available to take the message
                 else if (status == WsdMessageCode.NO_CLIENTS) {
                     LOGGER.error(String.format("Attempted to send message '%s', but no clients connected", submitSm.getMessageId()));
                     responseSender.send(Response.SYSTEM_ERROR);
                 }
+
                 else {
                     LOGGER.error(String.format("Message '%s' failed to be sent, error code: %d", submitSm.getMessageId(), status));
                     responseSender.send(Response.SYSTEM_ERROR);
@@ -133,7 +101,7 @@ public class DaliaSmppRequestHandler extends SmppRequestHandler {
             }
         };
 
-        wsdServer.sendNext(submitSm.toEndpointRequest(), listener);
+        DaliaContext.getWsdServer().sendNext(submitSm.toEndpointRequest(), listener);
     }
 
     @Override

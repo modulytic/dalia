@@ -7,7 +7,7 @@ import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
 
-public class SmppTimeHandler {
+public class SmppTime {
     /**
      * Format {@link LocalDateTime} as SMPP absolute timestamp
      * @param dt    LocalDateTime
@@ -18,8 +18,7 @@ public class SmppTimeHandler {
     }
 
     public static String formatAbsolute(LocalDateTime dt, ZoneId zone) {
-        ZonedDateTime zdt = dt.atZone(zone);
-        return formatAbsolute(zdt);
+        return formatAbsolute(dt.atZone(zone));
     }
 
     /**
@@ -30,17 +29,15 @@ public class SmppTimeHandler {
     public static String formatAbsolute(ZonedDateTime zdt) {
         StringBuilder sb = new StringBuilder();
 
-        // year through second
-        sb.append(zdt.format(DateTimeFormatter.ofPattern("uuMMddHHmmss")));
-
-        // tenth of second. first digit of milliseconds
-        sb.append(zdt.format(DateTimeFormatter.ofPattern("S")).charAt(0));
+        // year through tenth seconds
+        sb.append(zdt.format(DateTimeFormatter.ofPattern("uuMMddHHmmss")))
+                .append(zdt.format(DateTimeFormatter.ofPattern("S")).charAt(0));
 
         // offset from UTC in quarter hours
         ZoneOffset offset = zdt.getOffset();
         int smppOffset    = offset.getTotalSeconds() / 900;     // number of seconds in 15 minutes
-        sb.append(String.format("%02d", Math.abs(smppOffset)));
-        sb.append((smppOffset < 0) ? '-' : '+');
+        sb.append(String.format("%02d", Math.abs(smppOffset)))
+                .append((smppOffset < 0) ? '-' : '+');
 
         return sb.toString();
     }

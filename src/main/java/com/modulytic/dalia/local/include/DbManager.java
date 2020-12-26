@@ -12,7 +12,7 @@ import java.util.*;
  * @author  <a href="mailto:noah@modulytic.com">Noah Sandman</a>
  */
 public abstract class DbManager {
-    protected final Logger LOGGER;
+    protected final transient Logger LOGGER;
 
     private final Map<String, Class<?>> requiredKeys;
 
@@ -40,7 +40,7 @@ public abstract class DbManager {
      * @param match Parameters to match
      * @return      List of maps, where each map is a row
      */
-    public Table<Integer, String, Object> fetch(String table, LinkedHashMap<String, ?> match) {
+    public Table<Integer, String, Object> fetch(String table, Map<String, ?> match) {
         return fetch(table, match, null);
     }
 
@@ -49,7 +49,7 @@ public abstract class DbManager {
      * @param table     Name of table
      * @param values    Values to insert
      */
-    public abstract void insert(String table, LinkedHashMap<String, ?> values);
+    public abstract void insert(String table, Map<String, ?> values);
 
     /**
      * Update values that already exist in database
@@ -57,7 +57,7 @@ public abstract class DbManager {
      * @param values    New values to update
      * @param match     Rows to match to perform the update on
      */
-    public abstract void update(String table, LinkedHashMap<String, ?> values, LinkedHashMap<String, ?> match);
+    public abstract void update(String table, Map<String, ?> values, Map<String, ?> match);
 
     /**
      * Fetch certain columns from database
@@ -66,7 +66,7 @@ public abstract class DbManager {
      * @param columns   Columns to return
      * @return          List of maps, where each map is a row
      */
-    public abstract Table<Integer, String, Object> fetch(String table, LinkedHashMap<String, ?> match, Set<String> columns);
+    public abstract Table<Integer, String, Object> fetch(String table, Map<String, ?> match, Set<String> columns);
 
     /**
      * If connection to database needs to be manually closed, that can be implemented here

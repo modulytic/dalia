@@ -31,27 +31,23 @@ public class Constants {
     public static int SMPP_HOST_PORT = 2775;
 
     /**
+     * hort for WebSocket server to be hosted on
+     */
+    @SuppressWarnings("PMD.AvoidUsingHardCodedIP")
+    public static String WSD_HOST_PORT = "0.0.0.0";
+
+    /**
      * Default timeout for sent SMPP requests
      */
     public static int SMPP_REQUEST_TIMEOUT = 1000;
 
     /**
-     * Default name of MySQL database
-     */
-    public static String DB_DEFAULT_NAME = "dalia";
-
-    /**
-     * Default username for MySQL
-     */
-    public static String DB_USERNAME = "dalia";
-
-    /**
-     * Default password for MySQL
-     */
-    public static String DB_PASSWORD = "password";
-
-    /**
      * Default port to host the WebSockets server on
      */
     public static int WS_HOST_PORT = 3000;
+
+    /**
+     * Default region for decoding national numbers
+     */
+    public static String DEFAULT_ADDRESS_REGION = "US";
 }

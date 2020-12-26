@@ -3,6 +3,7 @@ package com.modulytic.dalia.local;
 import com.google.common.collect.HashBasedTable;
 import com.google.common.collect.Table;
 import com.modulytic.dalia.Constants;
+import com.modulytic.dalia.local.include.DbConstants;
 import com.modulytic.dalia.local.include.DbManager;
 
 import java.sql.*;
@@ -17,7 +18,7 @@ import java.util.*;
  * @author  <a href="mailto:noah@modulytic.com">Noah Sandman</a>
  */
 public class MySqlDbManager extends DbManager {
-    private Connection connection;
+    private transient Connection connection;
 
     /**
      * Connect with default network and database params
@@ -25,7 +26,7 @@ public class MySqlDbManager extends DbManager {
      * @param pass  MySQL password
      */
     public MySqlDbManager(String user, String pass) {
-        this(user, pass, Constants.DB_DEFAULT_NAME);
+        this(user, pass, DbConstants.DEFAULT_NAME);
     }
 
     /**
@@ -67,7 +68,7 @@ public class MySqlDbManager extends DbManager {
             this.connection = DriverManager.getConnection(url);
             LOGGER.info("Successfully connected to database");
         } catch (SQLException throwables) {
-            throwables.printStackTrace();
+            LOGGER.error(throwables.getMessage());
         }
     }
 
@@ -92,11 +93,11 @@ public class MySqlDbManager extends DbManager {
         return String.format("jdbc:mysql://%s:%d/%s?user=%s&password=%s", host, port, database, user, pass);
     }
 
-    private PreparedStatement prepareStatement(String query, LinkedHashMap<String, ?> values) throws SQLException {
+    private PreparedStatement prepareStatement(String query, Map<String, ?> values) throws SQLException {
         return prepareStatement(query, values, null);
     }
 
-    private PreparedStatement prepareStatement(String query, LinkedHashMap<String, ?> values, LinkedHashMap<String, ?> matches) throws SQLException {
+    private PreparedStatement prepareStatement(String query, Map<String, ?> values, Map<String, ?> matches) throws SQLException {
         PreparedStatement statement = this.connection.prepareStatement(query);
 
         List<Object> valuesArr = new ArrayList<>(values.values());
@@ -142,19 +143,19 @@ public class MySqlDbManager extends DbManager {
     }
 
     @Override
-    public void insert(String table, LinkedHashMap<String, ?> values) {
+    public void insert(String table, Map<String, ?> values) {
         String columnsStr = String.join(",", values.keySet());
 
         // same number of ?s as params, separated by commas
         String valuesPlaceholder = "?, ".repeat(values.size());
         valuesPlaceholder = valuesPlaceholder.substring(0, valuesPlaceholder.length()-2);
 
-        String query = String.format("INSERT INTO %s (%s) VALUES (%s);", table, columnsStr, valuesPlaceholder);
+        final String query = String.format("INSERT INTO %s (%s) VALUES (%s);", table, columnsStr, valuesPlaceholder);
         try (PreparedStatement statement = prepareStatement(query, values)) {
             statement.executeUpdate();
         }
         catch (SQLException throwables) {
-            throwables.printStackTrace();
+            LOGGER.error(throwables.getMessage());
         }
     }
 
@@ -207,7 +208,7 @@ public class MySqlDbManager extends DbManager {
     }
 
     @Override
-    public Table<Integer, String, Object> fetch(String table, LinkedHashMap<String, ?> matches, Set<String> columns) {
+    public Table<Integer, String, Object> fetch(String table, Map<String, ?> matches, Set<String> columns) {
         StringBuilder matchStr = new StringBuilder();
         for (String match : matches.keySet()) {
             if (matchStr.length() != 0)
@@ -217,25 +218,23 @@ public class MySqlDbManager extends DbManager {
             matchStr.append("=?");
         }
 
-        String colsRaw = "*";
-        if (columns != null)
-            colsRaw = String.join(",", columns);
+        String colsRaw = (columns == null) ? "*" : String.join(",", columns);
 
-        String query = String.format("SELECT %s FROM %s WHERE %s;", colsRaw, table, matchStr);
+        final String query = String.format("SELECT %s FROM %s WHERE %s;", colsRaw, table, matchStr);
         try (PreparedStatement statement = prepareStatement(query, matches)) {
             if (statement.execute()) {
                 return parseResultSet(statement.getResultSet());
             }
         }
         catch (SQLException throwables) {
-            throwables.printStackTrace();
+            LOGGER.error(throwables.getMessage());
         }
 
         return null;
     }
 
     @Override
-    public void update(String table, LinkedHashMap<String, ?> values, LinkedHashMap<String, ?> matches) {
+    public void update(String table, Map<String, ?> values, Map<String, ?> matches) {
         StringBuilder updateStr = new StringBuilder();
         for (String value : values.keySet()) {
             if (updateStr.length() != 0)
@@ -259,7 +258,7 @@ public class MySqlDbManager extends DbManager {
             statement.executeUpdate();
         }
         catch (SQLException throwables) {
-            throwables.printStackTrace();
+            LOGGER.error(throwables.getMessage());
         }
     }
 

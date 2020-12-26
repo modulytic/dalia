@@ -37,10 +37,7 @@ public class Config {
      * @return              Full path as string
      */
     public static String getPrefixFile(String file, String subdirectory) {
-        File flatPath = new File(file);
-        if (!subdirectory.isEmpty())
-            flatPath = new File(subdirectory, file);
-
+        File flatPath = (subdirectory.isEmpty()) ? new File(file) : new File(subdirectory, file);
         File joinedPath = new File(getPrefix(), flatPath.getPath());
         return joinedPath.getAbsolutePath();
     }

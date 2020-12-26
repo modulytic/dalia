@@ -65,6 +65,7 @@ public class WsdMessage {
      * Convert message to string for sending over WebSockets
      * @return  string in JSON format
      */
+    @Override
     public String toString() {
         return new Gson().toJson(this);
     }

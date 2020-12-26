@@ -1,5 +1,6 @@
 plugins {
     id 'application'
+    id 'pmd'
 }
 apply plugin : 'java'
 
@@ -8,6 +9,12 @@ version '1.0-SNAPSHOT'
 
 application {
     mainClassName = 'com.modulytic.dalia.Main'
+}
+
+pmd {
+    toolVersion = "6.30.0"
+    ruleSets = ["ruleset_dalia.xml"]
+    pmdTest.enabled = false
 }
 
 repositories {

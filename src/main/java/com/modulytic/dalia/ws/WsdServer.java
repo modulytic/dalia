@@ -2,6 +2,7 @@ package com.modulytic.dalia.ws;
 
 import com.google.gson.Gson;
 import com.google.gson.internal.LinkedTreeMap;
+import com.modulytic.dalia.Constants;
 import com.modulytic.dalia.ws.api.WsdMessage;
 import com.modulytic.dalia.ws.api.WsdMessageCode;
 import com.modulytic.dalia.ws.include.WsdStatusListener;
@@ -13,55 +14,44 @@ import org.slf4j.LoggerFactory;
 
 import java.net.InetSocketAddress;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * WebSocket server
  * @author  <a href="mailto:noah@modulytic.com">Noah Sandman</a>
  */
 public class WsdServer extends WebSocketServer {
-    protected final Logger LOGGER = LoggerFactory.getLogger(WsdServer.class);
+    protected static final Logger LOGGER = LoggerFactory.getLogger(WsdServer.class);
 
     /**
      * Active WebSocket clients connected
      */
-    private final List<WebSocket> activeConnections;
+    private static final List<WebSocket> activeConnections = new ArrayList<>();
 
     /**
      * Client currently selected by round-robin distributor
      */
-    private int activeIndex = 0;
+    private static int activeIndex;
 
     /**
      * Handler for parsed messages
      */
-    private WsdMessageHandler handler = null;
+    private static final WsdMessageHandler handler = new WsdMessageHandler();
 
     /**
      * Status listeners
      */
-    private final HashMap<String, WsdStatusListener> pendingStatuses;
+    private static final Map<String, WsdStatusListener> pendingStatuses = new ConcurrentHashMap<>();
 
     /**
      * Create a new WebSockets server that can start with .run()
      * @param port  port to start server on
      */
     public WsdServer(int port) {
-        super(new InetSocketAddress("0.0.0.0", port));
-
-        this.activeConnections = new ArrayList<>();
-        this.pendingStatuses = new HashMap<>();
-
+        super(new InetSocketAddress(Constants.WSD_HOST_PORT, port));
         LOGGER.info(String.format("Attempting to start WebSocket server on port %d", port));
-    }
-
-    /**
-     * Set handler to deal with received messages
-     * @param handler   a WsdMessageHandler
-     */
-    public void setHandler(WsdMessageHandler handler) {
-        this.handler = handler;
     }
 
     /**
@@ -72,7 +62,7 @@ public class WsdServer extends WebSocketServer {
     @Override
     public void onOpen(WebSocket conn, ClientHandshake handshake) {
         LOGGER.info(String.format("New client (%s) connected to WebSocket server", conn.getRemoteSocketAddress()));
-        this.activeConnections.add(conn);
+        activeConnections.add(conn);
     }
 
     /**
@@ -85,7 +75,7 @@ public class WsdServer extends WebSocketServer {
     @Override
     public void onClose(WebSocket conn, int code, String reason, boolean remote) {
         LOGGER.info(String.format("Client (%s) disconnected with code %d, reason: %s", conn.getRemoteSocketAddress(), code, reason));
-        this.activeConnections.remove(conn);
+        activeConnections.remove(conn);
     }
 
     /**
@@ -98,9 +88,9 @@ public class WsdServer extends WebSocketServer {
         LOGGER.info(String.format("Received message '%s' from %s, processing", message, conn.getRemoteSocketAddress()));
 
         WsdMessage wsdMessage = new Gson().fromJson(message, WsdMessage.class);
-        if (wsdMessage.getName().equals("&cmd")) {
-            if (wsdMessage.getParams().get("code").equals("STATUS")) {
-                LinkedTreeMap<String, ?> data = (LinkedTreeMap<String, ?>) wsdMessage.getParams().get("data");
+        if ("&cmd".equals(wsdMessage.getName())) {
+            if ("STATUS".equals(wsdMessage.getParams().get("code"))) {
+                Map<String, ?> data = (LinkedTreeMap<String, ?>) wsdMessage.getParams().get("data");
 
                 String id = (String) data.get("id");
                 int status = ((Double) data.get("status")).intValue();
@@ -110,8 +100,8 @@ public class WsdServer extends WebSocketServer {
             }
         }
         else {
-            if (this.handler != null)
-                this.handler.onMessage(wsdMessage);
+            if (handler != null)
+                handler.onMessage(wsdMessage);
         }
     }
 

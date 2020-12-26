@@ -1,13 +1,12 @@
 package com.modulytic.dalia.smpp;
 
-import com.modulytic.dalia.smpp.include.SmppRequestHandler;
 import net.gescobar.smppserver.SmppSession;
 import net.gescobar.smppserver.SmppSessionListener;
-import net.gescobar.smppserver.packet.Bind;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * Saves {@link SmppSession sessions} on connect and bind, and provides methods to access their {@link DaliaSessionBridge bridges} easily in Java
@@ -17,18 +16,12 @@ public class DaliaSmppSessionListener implements SmppSessionListener {
     /**
      * Hashmap of active connections, indexed by username, so we can access them quickly
      */
-    private final HashMap<String, DaliaSessionBridge> bridges;
+    private static final Map<String, DaliaSessionBridge> bridges = new ConcurrentHashMap<>();
 
     /**
      * Sessions that have been initiated, but not yet bound or authenticated
      */
-    private final List<SmppSession> pendingSessions;
-
-    public DaliaSmppSessionListener() {
-        this.bridges = new HashMap<>();
-
-        this.pendingSessions = new ArrayList<>();
-    }
+    private static final List<SmppSession> pendingSessions = new ArrayList<>();
 
     /**
      * Get {@link DaliaSessionBridge bridge} to communicate with an ESME
@@ -36,7 +29,7 @@ public class DaliaSmppSessionListener implements SmppSessionListener {
      * @return          bridge if found, otherwise null
      */
     public DaliaSessionBridge getSessionBridge(String systemId) {
-        return this.bridges.get(systemId);
+        return bridges.get(systemId);
     }
 
     /**
@@ -45,18 +38,18 @@ public class DaliaSmppSessionListener implements SmppSessionListener {
      */
     @Override
     public void created(SmppSession smppSession) {
-        this.pendingSessions.add(smppSession);
+        pendingSessions.add(smppSession);
     }
 
     /**
-     * indicate that session is successfully bound, called from {@link SmppRequestHandler#onBind(Bind)}
+     * indicate that session is successfully bound
      * @param systemId  username ESME is authenticated under
      */
     public void activateSession(String systemId) {
         for (SmppSession session : pendingSessions) {
             if (session.isBound() && session.getSystemId().equals(systemId)) {
-                this.pendingSessions.remove(session);
-                this.bridges.put(systemId, new DaliaSessionBridge(session));
+                pendingSessions.remove(session);
+                bridges.put(systemId, new DaliaSessionBridge(session));
 
                 break;
             }
@@ -71,10 +64,10 @@ public class DaliaSmppSessionListener implements SmppSessionListener {
     public void destroyed(SmppSession smppSession) {
         if (smppSession.isBound()) {
             String systemId = smppSession.getSystemId();
-            this.bridges.remove(systemId);
+            bridges.remove(systemId);
         }
         else {
-            this.pendingSessions.remove(smppSession);
+            pendingSessions.remove(smppSession);
         }
     }
 }

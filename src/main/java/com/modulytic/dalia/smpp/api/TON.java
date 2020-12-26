@@ -6,6 +6,7 @@ package com.modulytic.dalia.smpp.api;
  */
 @SuppressWarnings("unused")
 public class TON {
+    @SuppressWarnings("PMD.RedundantFieldInitializer")
     public static byte UNKNOWN = 0;
     public static byte INTERNATIONAL = 1;
     public static byte NATIONAL = 2;

@@ -8,12 +8,12 @@ import java.time.ZonedDateTime;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-class SmppTimeHandlerTest {
+class SmppTimeTest {
 
     @Test
     void formatAbsolute() {
         LocalDateTime dt = LocalDateTime.of(2001, 6, 27, 13, 24, 4, 900000000);
-        String absoluteStamp = SmppTimeHandler.formatAbsolute(dt, ZoneId.of("America/Los_Angeles"));
+        String absoluteStamp = SmppTime.formatAbsolute(dt, ZoneId.of("America/Los_Angeles"));
         assertEquals("010627132404928-", absoluteStamp);
     }
 
@@ -27,7 +27,7 @@ class SmppTimeHandlerTest {
         dt = dt.minusMinutes(2);
         dt = dt.minusSeconds(1);
 
-        String relativeStamp = SmppTimeHandler.formatRelative(dt);
+        String relativeStamp = SmppTime.formatRelative(dt);
         assertEquals("060504030201000R", relativeStamp);
     }
 
@@ -41,7 +41,7 @@ class SmppTimeHandlerTest {
         dt = dt.minusMinutes(2);
         dt = dt.minusSeconds(1);
 
-        String relativeStamp = SmppTimeHandler.formatRelative(dt);
+        String relativeStamp = SmppTime.formatRelative(dt);
         assertEquals("060504030201000R", relativeStamp);
     }
 }

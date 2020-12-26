@@ -37,9 +37,9 @@ public class DeliveryReport {
     private MessageState status;
 
     /**
-     * Error code, if any encountered
+     * Error code, if any encountered. Default: 0
      */
-    private int error = 0;
+    private int error;
 
     public DeliveryReport() {
         this.deliverSm = new DeliverSm();
@@ -132,8 +132,8 @@ public class DeliveryReport {
     public DeliverSm toDeliverSm() {
         String sm = String.format("id:%s submit date:%s done date:%s stat:%s err:%d",
                                         this.id,
-                                        SmppTimeHandler.formatAbsolute(this.submitDate),
-                                        SmppTimeHandler.formatAbsolute(this.doneDate),
+                                        SmppTime.formatAbsolute(this.submitDate),
+                                        SmppTime.formatAbsolute(this.doneDate),
                                         this.status.toString(),
                                         this.error);
         this.deliverSm.setShortMessage(sm.getBytes());
