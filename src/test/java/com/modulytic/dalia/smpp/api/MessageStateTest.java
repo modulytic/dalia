@@ -59,6 +59,13 @@ class MessageStateTest {
 
     @Test
     void statesAreCreatedFromStrings() {
-        assertEquals(MessageState.ACCEPTED, MessageState.fromCode("ACCEPTD"));
+        assertEquals(MessageState.ACCEPTED,      MessageState.fromCode("ACCEPTD"));
+        assertEquals(MessageState.DELETED,       MessageState.fromCode("DELETED"));
+        assertEquals(MessageState.DELIVERED,     MessageState.fromCode("DELIVRD"));
+        assertEquals(MessageState.EN_ROUTE,      MessageState.fromCode("ENROUTE"));
+        assertEquals(MessageState.EXPIRED,       MessageState.fromCode("EXPIRED"));
+        assertEquals(MessageState.REJECTED,      MessageState.fromCode("REJECTD"));
+        assertEquals(MessageState.UNDELIVERABLE, MessageState.fromCode("UNDELIV"));
+        assertEquals(MessageState.UNKNOWN,       MessageState.fromCode("UNKNOWN"));
     }
 }
