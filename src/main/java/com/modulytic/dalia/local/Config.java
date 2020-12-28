@@ -8,7 +8,9 @@ import java.io.File;
  * Manage Dalia configuration
  * @author <a href="mailto:noah@modulytic.com">Noah Sandman</a>
  */
-public class Config {
+public final class Config {
+    private Config() {}
+
     /**
      * Get prefix directory, check {@link Constants#ENV_PREFIX environment variable}, fall back to {@link Constants#PREFIX_FALLBACK}
      * @return  String with path to Dalia prefix

@@ -4,7 +4,6 @@ import com.google.common.collect.Table;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.sql.Timestamp;
 import java.util.*;
 
 /**
@@ -14,24 +13,8 @@ import java.util.*;
 public abstract class DbManager {
     protected final transient Logger LOGGER;
 
-    private final Map<String, Class<?>> requiredKeys;
-
     public DbManager() {
         LOGGER = LoggerFactory.getLogger(this.getClass());
-
-        requiredKeys = new HashMap<>();
-        requiredKeys.put("msg_id", String.class);
-        requiredKeys.put("msg_status", String.class);
-        requiredKeys.put("failure_only", Boolean.class);
-        requiredKeys.put("intermediate", Boolean.class);
-        requiredKeys.put("submit_date", Timestamp.class);
-        requiredKeys.put("src_addr", String.class);
-        requiredKeys.put("dst_addr", String.class);
-        requiredKeys.put("smpp_user", String.class);
-    }
-
-    public Map<String, Class<?>> getRequiredKeys() {
-        return this.requiredKeys;
     }
 
     /**

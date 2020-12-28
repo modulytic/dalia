@@ -4,7 +4,9 @@ package com.modulytic.dalia;
  * Constants relevant to the program that should be easy to change
  * @author  <a href="mailto:noah@modulytic.com">Noah Sandman</a>
  */
-public class Constants {
+public final class Constants {
+    private Constants() {}
+
     /**
      * Environment variable that holds location of prefix
      */

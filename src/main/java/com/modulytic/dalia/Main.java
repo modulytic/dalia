@@ -16,7 +16,9 @@ import org.slf4j.LoggerFactory;
  * Main class, entrypoint into program
  * @author  <a href="mailto:noah@modulytic.com">Noah Sandman</a>
  */
-public class Main {
+public final class Main {
+    private Main() {}
+
     private static final Logger LOGGER = LoggerFactory.getLogger(Main.class);
 
     public static void main(String[] args) {

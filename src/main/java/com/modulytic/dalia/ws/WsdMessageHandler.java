@@ -4,6 +4,8 @@ import com.modulytic.dalia.smpp.DLRUpdateHandler;
 import com.modulytic.dalia.smpp.api.MessageState;
 import com.modulytic.dalia.ws.api.WsdMessage;
 
+import java.util.Map;
+
 /**
  * Handle and route incoming WebSockets messages
  * @author  <a href="mailto:noah@modulytic.com">Noah Sandman</a>
@@ -19,8 +21,10 @@ public class WsdMessageHandler {
         switch (message.getName()) {
             case "dlr_update.php":              // legacy
             case "dlr_update": {
-                String id           = (String) message.getParams().get("id");
-                String statusRaw    = (String) message.getParams().get("new_status");
+                Map<String, ?> params = message.getParams();
+
+                String id           = (String) params.get("id");
+                String statusRaw    = (String) params.get("new_status");
                 MessageState status = MessageState.fromCode(statusRaw);
 
                 dlrUpdateHandler.updateStatus(id, status);

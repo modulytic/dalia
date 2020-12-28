@@ -1,6 +1,7 @@
 package com.modulytic.dalia.smpp.include;
 
 import com.modulytic.dalia.DaliaContext;
+import com.modulytic.dalia.smpp.DaliaSmppSessionListener;
 import com.modulytic.dalia.smpp.request.SubmitRequest;
 import net.gescobar.smppserver.Response;
 import net.gescobar.smppserver.ResponseSender;
@@ -31,6 +32,7 @@ public abstract class SmppRequestHandler {
      * @param req   SmppRequest, incoming packet
      * @param res   ResponseSender, can send a Response object to ESME
      */
+    @SuppressWarnings("PMD.CyclomaticComplexity")       // needed for routing
     public void onSmppRequest(SmppRequest req, ResponseSender res) {
         // make sure listener is defined
         if (DaliaContext.getSessionListener() == null) {
@@ -94,6 +96,8 @@ public abstract class SmppRequestHandler {
      * @param bind  bind packet
      */
     private void onBind(Bind bind, ResponseSender responseSender) {
+        final DaliaSmppSessionListener sessionListener = DaliaContext.getSessionListener();
+
         // if no authenticator, always fail
         if (authenticator == null) {
             LOGGER.error("Cannot authenticate user: no authenticator defined in request router!!!");
@@ -105,7 +109,7 @@ public abstract class SmppRequestHandler {
         this.smppUser = systemId;
 
         // do not attempt authentication if already bound
-        if (DaliaContext.getSessionListener().getSessionBridge(systemId) != null) {
+        if (sessionListener.getSessionBridge(systemId) != null) {
             responseSender.send(Response.ALREADY_BOUND);
             return;
         }
@@ -113,11 +117,7 @@ public abstract class SmppRequestHandler {
         Response authResponse = this.authenticator.auth(systemId, bind.getPassword());
         if (authResponse == Response.OK) {
             // let the rest of the system know we are successfully bound
-            DaliaContext.getSessionListener().activateSession(systemId);
-            onAuthSuccess(systemId);
-        }
-        else {
-            onAuthFailure(systemId);
+            sessionListener.activateSession(systemId);
         }
 
         responseSender.send(authResponse);
@@ -136,18 +136,6 @@ public abstract class SmppRequestHandler {
     private void onEnquireLink(ResponseSender responseSender) {
         responseSender.send(Response.OK);
     }
-
-    /**
-     * Handle successful authentication from SMPP
-     * @param sysId username that was authenticated
-     */
-    public abstract void onAuthSuccess(String sysId);
-
-    /**
-     * Handle failed authentication from SMPP
-     * @param sysId username from the request
-     */
-    public abstract void onAuthFailure(String sysId);
 
     /**
      * Handle submit_sm PDU

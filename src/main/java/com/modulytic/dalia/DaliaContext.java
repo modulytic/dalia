@@ -5,7 +5,9 @@ import com.modulytic.dalia.smpp.DLRUpdateHandler;
 import com.modulytic.dalia.smpp.DaliaSmppSessionListener;
 import com.modulytic.dalia.ws.WsdServer;
 
-public class DaliaContext {
+public final class DaliaContext {
+    private DaliaContext() {}
+
     private static DbManager database;
     private static DaliaSmppSessionListener sessionListener;
     private static DLRUpdateHandler updateHandler;

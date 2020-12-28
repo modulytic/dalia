@@ -3,7 +3,9 @@ package com.modulytic.dalia.smpp.request;
 import com.google.common.collect.Table;
 import com.modulytic.dalia.DaliaContext;
 import com.modulytic.dalia.local.include.DbConstants;
+import com.modulytic.dalia.local.include.DbManager;
 import com.modulytic.dalia.smpp.DaliaSessionBridge;
+import com.modulytic.dalia.smpp.DaliaSmppSessionListener;
 import com.modulytic.dalia.smpp.api.DeliveryReport;
 import com.modulytic.dalia.smpp.api.MessageState;
 
@@ -60,7 +62,7 @@ public class DLRRequest {
      * @param values    map of values fetched from database
      */
     private void setValues(Map<String, Object> values) {
-        Map<String, Class<?>> requiredKeys = DaliaContext.getDatabase().getRequiredKeys();
+        Map<String, Class<?>> requiredKeys = DbConstants.getDbTypes();
 
         for (String key : requiredKeys.keySet()) {
             if (!values.containsKey(key))
@@ -103,15 +105,16 @@ public class DLRRequest {
      * @param status    valid {@link MessageState}
      */
     public void persistNewStatus(MessageState status) {
+        final DbManager manager = DaliaContext.getDatabase();
         this.values.replace(DbConstants.MSG_STATUS, status);
 
-        if (DaliaContext.getDatabase() == null)
+        if (manager == null)
             return;
 
         Map<String, Object> tmpMap = (Map<String, Object>) ((LinkedHashMap<String, Object>) this.values).clone();
         tmpMap.replace(DbConstants.MSG_STATUS, status.toString());
 
-        DaliaContext.getDatabase().update(DbConstants.DLR_TABLE, tmpMap, getMatch());
+        manager.update(DbConstants.DLR_TABLE, tmpMap, getMatch());
     }
 
     /**
@@ -122,7 +125,8 @@ public class DLRRequest {
         if (this.values == null)
             return null;
 
-        return DaliaContext.getSessionListener().getSessionBridge((String) this.values.get(DbConstants.SMPP_USER));
+        final DaliaSmppSessionListener listener = DaliaContext.getSessionListener();
+        return listener.getSessionBridge((String) this.values.get(DbConstants.SMPP_USER));
     }
 
     /**

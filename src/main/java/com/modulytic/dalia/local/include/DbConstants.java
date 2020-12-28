@@ -1,6 +1,12 @@
 package com.modulytic.dalia.local.include;
 
-public class DbConstants {
+import java.sql.Timestamp;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+
+public final class DbConstants {
+    private DbConstants() {}
+
     /**
      * Default name of MySQL database
      */
@@ -27,4 +33,28 @@ public class DbConstants {
     public static final String SUBMIT_DATE  = "submit_date";
     public static final String SOURCE_ADDR  = "src_addr";
     public static final String DEST_ADDR    = "dst_addr";
+
+    public static final String VROUTE_TABLE = "billing_vroutes";
+    public static final String COUNTRY_CODE = "country_code";
+    public static final String IS_ACTIVE    = "is_active";
+
+    public static final String LOG_TABLE = "billing_logs";
+    public static final String VROUTE    = "vroute";
+    public static final String RATE      = "rate";
+
+    private static final Map<String, Class<?>> dbTypes = new ConcurrentHashMap<>();
+    public static Map<String, Class<?>> getDbTypes() {
+        if (dbTypes.isEmpty()) {
+            dbTypes.put(MSG_ID, String.class);
+            dbTypes.put(MSG_STATUS, String.class);
+            dbTypes.put(FAILURE_ONLY, Boolean.class);
+            dbTypes.put(INTERMEDIATE, Boolean.class);
+            dbTypes.put(SUBMIT_DATE, Timestamp.class);
+            dbTypes.put(SOURCE_ADDR, String.class);
+            dbTypes.put(DEST_ADDR, String.class);
+            dbTypes.put(SMPP_USER, String.class);
+        }
+
+        return dbTypes;
+    }
 }

@@ -47,7 +47,7 @@ public class DaliaSmppSessionListener implements SmppSessionListener {
      */
     public void activateSession(String systemId) {
         for (SmppSession session : pendingSessions) {
-            if (session.isBound() && session.getSystemId().equals(systemId)) {
+            if (session.isBound() && systemId.equals(session.getSystemId())) {
                 pendingSessions.remove(session);
                 bridges.put(systemId, new DaliaSessionBridge(session));
 

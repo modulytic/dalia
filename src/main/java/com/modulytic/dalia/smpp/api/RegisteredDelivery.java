@@ -4,7 +4,6 @@ package com.modulytic.dalia.smpp.api;
  * Java interface to SMPP registered_delivery (see page 124 of the <a href="https://smpp.org/SMPP_v3_4_Issue1_2.pdf">SMPP 3.4 spec</a>)
  * @author  <a href="mailto:noah@modulytic.com">Noah Sandman</a>
  */
-@SuppressWarnings("unused")
 public class RegisteredDelivery {
     /**
      * Whether or not endpoint should forward DLRs along

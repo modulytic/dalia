@@ -8,6 +8,7 @@ import com.modulytic.dalia.smpp.api.RegisteredDelivery;
 import com.modulytic.dalia.smpp.request.SubmitRequest;
 import com.modulytic.dalia.smpp.api.SMSCAddress;
 import com.modulytic.dalia.smpp.include.SmppRequestHandler;
+import com.modulytic.dalia.ws.WsdServer;
 import com.modulytic.dalia.ws.api.WsdMessageCode;
 import com.modulytic.dalia.ws.include.WsdStatusListener;
 import net.gescobar.smppserver.Response;
@@ -19,6 +20,7 @@ import net.gescobar.smppserver.packet.SmppRequest;
  * @author  <a href="mailto:noah@modulytic.com">Noah Sandman</a>
  */
 public class DaliaSmppRequestHandler extends SmppRequestHandler {
+    @SuppressWarnings("PMD.CyclomaticComplexity")
     private void updateMessageStatus(String id, RegisteredDelivery registeredDelivery, MessageState newStatus) {
         if (id == null || registeredDelivery == null || newStatus == null)
             return;
@@ -36,15 +38,8 @@ public class DaliaSmppRequestHandler extends SmppRequestHandler {
         else if (!registeredDelivery.getReceiveFinal() && MessageState.isFinal(newStatus))
             return;
 
-        DaliaContext.getDLRUpdateHandler().updateStatus(id, newStatus);
-    }
-
-    @Override
-    public void onAuthSuccess(String sysId) {
-    }
-
-    @Override
-    public void onAuthFailure(String sysId) {
+        final DLRUpdateHandler dlrUpdateHandler = DaliaContext.getDLRUpdateHandler();
+        dlrUpdateHandler.updateStatus(id, newStatus);
     }
 
     // TODO handle replace if present on submit_sm
@@ -101,7 +96,8 @@ public class DaliaSmppRequestHandler extends SmppRequestHandler {
             }
         };
 
-        DaliaContext.getWsdServer().sendNext(submitSm.toEndpointRequest(), listener);
+        final WsdServer wsdServer = DaliaContext.getWsdServer();
+        wsdServer.sendNext(submitSm.toEndpointRequest(), listener);
     }
 
     @Override

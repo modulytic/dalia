@@ -7,7 +7,9 @@ import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
 
-public class SmppTime {
+public final class SmppTime {
+    private SmppTime() {}
+
     /**
      * Format {@link LocalDateTime} as SMPP absolute timestamp
      * @param dt    LocalDateTime
@@ -30,8 +32,9 @@ public class SmppTime {
         StringBuilder sb = new StringBuilder();
 
         // year through tenth seconds
+        String fractionSecs = zdt.format(DateTimeFormatter.ofPattern("S"));
         sb.append(zdt.format(DateTimeFormatter.ofPattern("uuMMddHHmmss")))
-                .append(zdt.format(DateTimeFormatter.ofPattern("S")).charAt(0));
+                .append(fractionSecs.charAt(0));
 
         // offset from UTC in quarter hours
         ZoneOffset offset = zdt.getOffset();

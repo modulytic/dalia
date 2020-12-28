@@ -1,16 +1,11 @@
 package com.modulytic.dalia.local;
 
-import com.google.common.collect.HashBasedTable;
 import com.google.common.collect.Table;
 import com.modulytic.dalia.Constants;
 import com.modulytic.dalia.local.include.DbConstants;
 import com.modulytic.dalia.local.include.DbManager;
 
 import java.sql.*;
-import java.sql.Date;
-import java.time.LocalDate;
-import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
 import java.util.*;
 
 /**
@@ -93,50 +88,22 @@ public class MySqlDbManager extends DbManager {
         return String.format("jdbc:mysql://%s:%d/%s?user=%s&password=%s", host, port, database, user, pass);
     }
 
-    private PreparedStatement prepareStatement(String query, Map<String, ?> values) throws SQLException {
+    private QueryStatement prepareStatement(String query, Map<String, ?> values) throws SQLException {
         return prepareStatement(query, values, null);
     }
 
-    private PreparedStatement prepareStatement(String query, Map<String, ?> values, Map<String, ?> matches) throws SQLException {
-        PreparedStatement statement = this.connection.prepareStatement(query);
+    @SuppressWarnings("PMD.CloseResource")      // PreparedStatement is closed when QueryStatement is
+    private QueryStatement prepareStatement(String query, Map<String, ?> values, Map<String, ?> matches) throws SQLException {
+        PreparedStatement preparedStatement = this.connection.prepareStatement(query);
+        QueryStatement statement = new QueryStatement(preparedStatement);
 
         List<Object> valuesArr = new ArrayList<>(values.values());
 
         if (matches != null)
             valuesArr.addAll(matches.values());
 
-        for (int i = 0; i < valuesArr.size(); i++) {
-            Object value = valuesArr.get(i);
-
-            if (value == null) {
-                statement.setNull(i+1, Types.NULL);
-            }
-            else if (value instanceof String) {
-                statement.setString(i+1, (String) value);
-            }
-            else if (value instanceof Integer) {
-                statement.setInt(i+1, (int) value);
-            }
-            else if (value instanceof Float) {
-                statement.setFloat(i+1, (float) value);
-            }
-            else if (value instanceof Double) {
-                statement.setDouble(i+1, (double) value);
-            }
-            else if (value instanceof Boolean) {
-                statement.setBoolean(i+1, (boolean) value);
-            }
-            else if (value instanceof LocalDateTime) {
-                LocalDateTime dt = (LocalDateTime) value;
-                statement.setString(i+1, dt.format(DateTimeFormatter.ofPattern("uuuu-MM-dd HH:mm:ss")));
-            }
-            else if (value instanceof LocalDate) {
-                LocalDate dt = (LocalDate) value;
-                statement.setString(i+1, dt.format(DateTimeFormatter.ofPattern("uuuu-MM-dd")));
-            }
-            else {
-                statement.setObject(i+1, value);
-            }
+        for (Object value : valuesArr) {
+            statement.add(value);
         }
 
         return statement;
@@ -151,60 +118,12 @@ public class MySqlDbManager extends DbManager {
         valuesPlaceholder = valuesPlaceholder.substring(0, valuesPlaceholder.length()-2);
 
         final String query = String.format("INSERT INTO %s (%s) VALUES (%s);", table, columnsStr, valuesPlaceholder);
-        try (PreparedStatement statement = prepareStatement(query, values)) {
-            statement.executeUpdate();
+        try (QueryStatement statement = prepareStatement(query, values)) {
+            statement.update();
         }
         catch (SQLException throwables) {
             LOGGER.error(throwables.getMessage());
         }
-    }
-
-    /**
-     * Turn SQL {@link ResultSet} into a list of maps that does not require an open database connection
-     * @param resultSet     ResultSet returned from SQL {@link Statement}
-     * @return              List of Maps, each map representing a row
-     * @throws SQLException any of the operations on ResultSet can throw an {@link SQLException}
-     */
-    private Table<Integer, String, Object> parseResultSet(ResultSet resultSet) throws SQLException {
-        ResultSetMetaData rsMetaData = resultSet.getMetaData();
-        int cols = rsMetaData.getColumnCount();
-
-        Table<Integer, String, Object> results = HashBasedTable.create();
-
-        Map<String, Class<?>> classNames = getRequiredKeys();
-
-        // i is rows, j is columns
-        for (int i = 0; resultSet.next(); i++) {
-            for (int j = 0; j <= cols; j++) {
-                String columnName = rsMetaData.getColumnName(j);
-                Class<?> columnType = classNames.get(columnName);
-
-                if (columnType.isInstance(String.class)) {
-                    results.put(i, columnName, resultSet.getString(j));
-                }
-                else if (columnType.isInstance(Timestamp.class)) {
-                    Timestamp ts = resultSet.getTimestamp(j);
-                    results.put(i, columnName, ts.toLocalDateTime());
-                }
-                else if (columnType.isInstance(Date.class)) {
-                    Date date = resultSet.getDate(j);
-                    results.put(i, columnName, date.toLocalDate());
-                }
-                else if (columnType.isInstance(Boolean.class)) {
-                    results.put(i, columnName, resultSet.getBoolean(j));
-                }
-                else {
-                    results.put(i, columnName, resultSet.getObject(j));
-                }
-            }
-        }
-
-        resultSet.close();
-
-        if (results.isEmpty())
-            return null;
-
-        return results;
     }
 
     @Override
@@ -221,10 +140,8 @@ public class MySqlDbManager extends DbManager {
         String colsRaw = (columns == null) ? "*" : String.join(",", columns);
 
         final String query = String.format("SELECT %s FROM %s WHERE %s;", colsRaw, table, matchStr);
-        try (PreparedStatement statement = prepareStatement(query, matches)) {
-            if (statement.execute()) {
-                return parseResultSet(statement.getResultSet());
-            }
+        try (QueryStatement statement = prepareStatement(query, matches)) {
+            return statement.execute();
         }
         catch (SQLException throwables) {
             LOGGER.error(throwables.getMessage());
@@ -254,8 +171,8 @@ public class MySqlDbManager extends DbManager {
         }
 
         String query = String.format("UPDATE %s SET %s WHERE %s;", table, updateStr, matchStr);
-        try (PreparedStatement statement = prepareStatement(query, values, matches)) {
-            statement.executeUpdate();
+        try (QueryStatement statement = prepareStatement(query, values, matches)) {
+            statement.update();
         }
         catch (SQLException throwables) {
             LOGGER.error(throwables.getMessage());

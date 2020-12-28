@@ -1,7 +1,6 @@
 package com.modulytic.dalia.ws;
 
 import com.google.gson.Gson;
-import com.google.gson.internal.LinkedTreeMap;
 import com.modulytic.dalia.Constants;
 import com.modulytic.dalia.ws.api.WsdMessage;
 import com.modulytic.dalia.ws.api.WsdMessageCode;
@@ -87,15 +86,18 @@ public class WsdServer extends WebSocketServer {
     public void onMessage(WebSocket conn, String message) {
         LOGGER.info(String.format("Received message '%s' from %s, processing", message, conn.getRemoteSocketAddress()));
 
-        WsdMessage wsdMessage = new Gson().fromJson(message, WsdMessage.class);
+        final WsdMessage wsdMessage = new Gson().fromJson(message, WsdMessage.class);
+        final Map<String, ?> params = wsdMessage.getParams();
+
         if ("&cmd".equals(wsdMessage.getName())) {
-            if ("STATUS".equals(wsdMessage.getParams().get("code"))) {
-                Map<String, ?> data = (LinkedTreeMap<String, ?>) wsdMessage.getParams().get("data");
+            if ("STATUS".equals(params.get("code"))) {
+                Map<String, ?> data = (Map<String, ?>) params.get("data");
 
-                String id = (String) data.get("id");
-                int status = ((Double) data.get("status")).intValue();
+                final String id = (String) data.get("id");
+                final int status = ((Double) data.get("status")).intValue();
 
-                pendingStatuses.get(id).onStatus(status);
+                final WsdStatusListener listener = pendingStatuses.get(id);
+                listener.onStatus(status);
                 pendingStatuses.remove(id);
             }
         }
