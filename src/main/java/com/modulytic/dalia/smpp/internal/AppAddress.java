@@ -4,15 +4,15 @@ import com.google.i18n.phonenumbers.NumberParseException;
 import com.google.i18n.phonenumbers.PhoneNumberUtil;
 import com.google.i18n.phonenumbers.Phonenumber.PhoneNumber;
 import com.modulytic.dalia.app.Constants;
-import com.modulytic.dalia.smpp.api.NPI;
-import com.modulytic.dalia.smpp.api.TON;
 import net.gescobar.smppserver.packet.Address;
+import net.gescobar.smppserver.packet.Npi;
+import net.gescobar.smppserver.packet.Ton;
 
 /**
  * {@link Address} that adds country codes and formatting from libphonenumber, and checks validity
  * @author  <a href="mailto:noah@modulytic.com">Noah Sandman</a>
  */
-public class SMSCAddress extends Address {
+public class AppAddress extends Address {
     /**
      * Instance of libphonenumber, can format and parse numbers
      */
@@ -28,7 +28,7 @@ public class SMSCAddress extends Address {
      */
     private boolean supported;
 
-    public SMSCAddress(Address address) {
+    public AppAddress(Address address) {
         super();
 
         super.setAddress(address.getAddress());
@@ -66,11 +66,11 @@ public class SMSCAddress extends Address {
     }
 
     private static boolean isValidTon(byte ton) {
-        return (ton == TON.INTERNATIONAL || ton == TON.NATIONAL);
+        return (ton == Ton.INTERNATIONAL || ton == Ton.NATIONAL);
     }
 
     private static boolean isValidNpi(byte npi) {
-        return (npi == NPI.E164 || npi == NPI.NATIONAL);
+        return (npi == Npi.E164 || npi == Npi.NATIONAL);
     }
 
     /**

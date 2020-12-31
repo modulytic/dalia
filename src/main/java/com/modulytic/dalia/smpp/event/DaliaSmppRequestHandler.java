@@ -6,7 +6,7 @@ import com.modulytic.dalia.billing.Vroute;
 import com.modulytic.dalia.smpp.api.MessageState;
 import com.modulytic.dalia.smpp.api.RegisteredDelivery;
 import com.modulytic.dalia.smpp.request.SubmitRequest;
-import com.modulytic.dalia.smpp.internal.SMSCAddress;
+import com.modulytic.dalia.smpp.internal.AppAddress;
 import com.modulytic.dalia.smpp.include.SmppRequestHandler;
 import com.modulytic.dalia.ws.WsdServer;
 import com.modulytic.dalia.ws.api.WsdMessageCode;
@@ -21,7 +21,7 @@ import net.gescobar.smppserver.packet.SmppRequest;
  */
 public class DaliaSmppRequestHandler extends SmppRequestHandler {
     @SuppressWarnings("PMD.CyclomaticComplexity")
-    private void updateMessageStatus(String id, RegisteredDelivery registeredDelivery, MessageState newStatus) {
+    private static void updateMessageStatus(String id, RegisteredDelivery registeredDelivery, MessageState newStatus) {
         if (id == null || registeredDelivery == null || newStatus == null)
             return;
 
@@ -45,7 +45,7 @@ public class DaliaSmppRequestHandler extends SmppRequestHandler {
         response.setMessageId(submitSm.getMessageId());
 
         // Parse destination phone number, and pass errors to client
-        SMSCAddress dest = submitSm.getDestAddress();
+        AppAddress dest = submitSm.getDestAddress();
         if (!dest.isValidNpi()) {
             responseSender.send(Response.INVALID_DESTINATION_NPI);
             return;
@@ -118,4 +118,6 @@ public class DaliaSmppRequestHandler extends SmppRequestHandler {
     public void onSubmitMulti(SmppRequest submitMulti, ResponseSender responseSender) {
         responseSender.send(Response.OK);
     }
+
+
 }

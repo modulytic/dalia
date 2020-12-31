@@ -2,7 +2,7 @@ package com.modulytic.dalia.smpp.request;
 
 import com.modulytic.dalia.app.database.include.Database;
 import com.modulytic.dalia.smpp.api.RegisteredDelivery;
-import com.modulytic.dalia.smpp.internal.SMSCAddress;
+import com.modulytic.dalia.smpp.internal.AppAddress;
 import com.modulytic.dalia.ws.api.WsdMessage;
 import net.gescobar.smppserver.packet.SubmitSm;
 
@@ -14,8 +14,8 @@ import java.util.concurrent.ConcurrentHashMap;
 public class SubmitRequest extends SubmitSm {
     private final RegisteredDelivery daliaRegisteredDelivery;
 
-    private SMSCAddress src;
-    private SMSCAddress dest;
+    private AppAddress src;
+    private AppAddress dest;
 
     private final String messageId;
     private String smppUser;
@@ -51,17 +51,17 @@ public class SubmitRequest extends SubmitSm {
     }
 
     @Override
-    public SMSCAddress getSourceAddress() {
+    public AppAddress getSourceAddress() {
         if (this.src == null)
-            this.src = new SMSCAddress(super.getSourceAddress());
+            this.src = new AppAddress(super.getSourceAddress());
 
         return this.src;
     }
 
     @Override
-    public SMSCAddress getDestAddress() {
+    public AppAddress getDestAddress() {
         if (this.dest == null)
-            this.dest = new SMSCAddress(super.getDestAddress());
+            this.dest = new AppAddress(super.getDestAddress());
 
         return this.dest;
     }
@@ -74,7 +74,6 @@ public class SubmitRequest extends SubmitSm {
         return this.daliaRegisteredDelivery.getForwardDlrs();
     }
 
-    @SuppressWarnings("unused")
     public boolean getWantsAllFinalStatuses() {
         return this.daliaRegisteredDelivery.getReceiveFinal();
     }

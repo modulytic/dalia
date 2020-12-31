@@ -17,7 +17,7 @@ class DaliaSmppSessionListenerTest {
 
         listener.created(session);
 
-        assertNull(listener.getSessionBridge("sysid"));
+        assertNull(DaliaSmppSessionListener.getSessionBridge("sysid"));
     }
 
     @Test
@@ -29,9 +29,9 @@ class DaliaSmppSessionListenerTest {
         when(session.isBound()).thenReturn(true);
 
         listener.created(session);
-        listener.activateSession("sysid");
+        DaliaSmppSessionListener.activate("sysid");
 
-        assertNotNull(listener.getSessionBridge("sysid"));
+        assertNotNull(DaliaSmppSessionListener.getSessionBridge("sysid"));
     }
 
     @Test
@@ -43,9 +43,9 @@ class DaliaSmppSessionListenerTest {
         when(session.isBound()).thenReturn(false);
 
         listener.created(session);
-        listener.activateSession("sysid");
+        DaliaSmppSessionListener.activate("sysid");
 
-        assertNull(listener.getSessionBridge("sysid"));
+        assertNull(DaliaSmppSessionListener.getSessionBridge("sysid"));
     }
 
     @Test
@@ -57,11 +57,12 @@ class DaliaSmppSessionListenerTest {
         when(session.isBound()).thenReturn(true);
 
         listener.created(session);
-        listener.activateSession("sysid");
+        DaliaSmppSessionListener.activate(session.getSystemId());
 
-        assertNotNull(listener.getSessionBridge("sysid"));
+        assertNotNull(DaliaSmppSessionListener.getSessionBridge("sysid"));
 
+        DaliaSmppSessionListener.deactivate(session.getSystemId());
         listener.destroyed(session);
-        assertNull(listener.getSessionBridge("sysid"));
+        assertNull(DaliaSmppSessionListener.getSessionBridge("sysid"));
     }
 }

@@ -10,8 +10,7 @@ class WsdServerThreadTest {
     void runStartsWsdServer() throws InterruptedException {
         WsdServer server = mock(WsdServer.class);
 
-        WsdServerThread thread = new WsdServerThread(server);
-        thread.start();
+        WsdThreadSpawner.start(server);
 
         // prevent race condition
         Thread.sleep(300);

@@ -1,8 +1,8 @@
 package com.modulytic.dalia.smpp.include;
 
-import com.modulytic.dalia.app.Context;
 import com.modulytic.dalia.smpp.event.DaliaSmppSessionListener;
 import com.modulytic.dalia.smpp.request.SubmitRequest;
+import net.gescobar.smppserver.PacketProcessor;
 import net.gescobar.smppserver.Response;
 import net.gescobar.smppserver.ResponseSender;
 import net.gescobar.smppserver.packet.*;
@@ -13,18 +13,37 @@ import org.slf4j.LoggerFactory;
  * Abstract router class for incoming SMPP packets
  * @author  <a href="mailto:noah@modulytic.com">Noah Sandman</a>
  */
-public abstract class SmppRequestHandler {
-    private SmppAuthenticator authenticator;
+public abstract class SmppRequestHandler implements PacketProcessor {
+    private static SmppAuthenticator authenticator;
     private String smppUser;
 
     protected static final Logger LOGGER = LoggerFactory.getLogger(SmppRequestHandler.class);
 
     /**
+     * Handler for bind requests from ESME
+     * @param bind  bind packet
+     */
+    private static boolean authBind(Bind bind, ResponseSender responseSender) {
+        final String systemId = bind.getSystemId();
+
+        // do not attempt authentication if already bound
+        if (DaliaSmppSessionListener.getSessionBridge(systemId) != null) {
+            responseSender.send(Response.ALREADY_BOUND);
+            return false;
+        }
+
+        Response authResponse = authenticator.auth(systemId, bind.getPassword());
+        responseSender.send(authResponse);
+
+        return (authResponse == Response.OK);
+    }
+
+    /**
      * Setter for SMPP authenticator, credentials are passed to this for a response
      * @param auth ? extends SmppAuthenticator
      */
-    public void setAuthenticator(SmppAuthenticator auth) {
-        this.authenticator = auth;
+    public static void setAuthenticator(SmppAuthenticator auth) {
+        authenticator = auth;
     }
 
     /**
@@ -32,27 +51,32 @@ public abstract class SmppRequestHandler {
      * @param req   SmppRequest, incoming packet
      * @param res   ResponseSender, can send a Response object to ESME
      */
+    @Override
     @SuppressWarnings("PMD.CyclomaticComplexity")       // needed for routing
-    public void onSmppRequest(SmppRequest req, ResponseSender res) {
-        // make sure listener is defined
-        if (Context.getSessionListener() == null) {
-            LOGGER.error("Fatal error: No listener specified in request router!!!");
-            res.send(Response.SYSTEM_ERROR);
-            return;
-        }
+    public void processPacket(SmppRequest req, ResponseSender res) {
+        switch (req.getCommandId()) {
+            case SmppPacket.BIND_TRANSMITTER:
+            case SmppPacket.BIND_RECEIVER:
+            case SmppPacket.BIND_TRANSCEIVER:
+                Bind b = (Bind) req;
+                String sysId = b.getSystemId();
 
-        if (req.isBind()) {
-            this.onBind((Bind) req, res);
-        }
-        else if (req.isSubmitSm()) {
-            SubmitRequest submitRequest = new SubmitRequest((SubmitSm) req);
-            submitRequest.setSmppUser(this.smppUser);
+                if (authBind(b, res)) {
+                    setSmppUser(sysId);
+                    DaliaSmppSessionListener.activate(sysId);
+                }
 
-            this.onSubmitSm(submitRequest, res);
-        }
-        else switch (req.getCommandId()) {
+                break;
+
             case SmppPacket.UNBIND:
-                this.onUnBind(res);
+                this.onUnbind(res);
+                break;
+
+            case SmppPacket.SUBMIT_SM:
+                SubmitRequest submitRequest = new SubmitRequest((SubmitSm) req);
+                submitRequest.setSmppUser(getSmppUser());
+
+                this.onSubmitSm(submitRequest, res);
                 break;
 
             case SmppPacket.ENQUIRE_LINK:
@@ -81,57 +105,17 @@ public abstract class SmppRequestHandler {
         }
     }
 
+    private void onUnbind(ResponseSender res) {
+        DaliaSmppSessionListener.deactivate(getSmppUser());
+        res.send(Response.OK);
+    }
+
     public void setSmppUser(String smppuser) {
         this.smppUser = smppuser;
     }
 
     public String getSmppUser() {
         return this.smppUser;
-    }
-
-    /**
-     * Handler for bind requests from ESME
-     *
-     * <p>
-     * Returns failure if {@link #setAuthenticator(SmppAuthenticator)} setAuthenticator} not called, or if
-     * the requested user is already bound
-     * </p>
-     *
-     * @param bind  bind packet
-     */
-    private void onBind(Bind bind, ResponseSender responseSender) {
-        final DaliaSmppSessionListener sessionListener = Context.getSessionListener();
-
-        // if no authenticator, always fail
-        if (authenticator == null) {
-            LOGGER.error("Cannot authenticate user: no authenticator defined in request router!!!");
-            responseSender.send(Response.BIND_FAILED);
-            return;
-        }
-
-        final String systemId = bind.getSystemId();
-        this.smppUser = systemId;
-
-        // do not attempt authentication if already bound
-        if (sessionListener.getSessionBridge(systemId) != null) {
-            responseSender.send(Response.ALREADY_BOUND);
-            return;
-        }
-
-        Response authResponse = this.authenticator.auth(systemId, bind.getPassword());
-        if (authResponse == Response.OK) {
-            // let the rest of the system know we are successfully bound
-            sessionListener.activateSession(systemId);
-        }
-
-        responseSender.send(authResponse);
-    }
-
-    /**
-     * Handle disconnect from ESME
-     */
-    private void onUnBind(ResponseSender responseSender) {
-        responseSender.send(Response.OK);
     }
 
     /**

@@ -102,8 +102,7 @@ public class DLRRequest {
         if (this.values == null)
             return null;
 
-        final DaliaSmppSessionListener listener = Context.getSessionListener();
-        return listener.getSessionBridge(this.values.get(DatabaseConstants.SMPP_USER));
+        return DaliaSmppSessionListener.getSessionBridge(this.values.get(DatabaseConstants.SMPP_USER));
     }
 
     /**

@@ -75,13 +75,13 @@ public class MySqlDatabase extends Database {
     }
 
     /**
-     * Create JBDC URL for database
+     * Create JDBC URL for database
      * @param user      MySQL username
      * @param pass      MySQL password
      * @param database  MySQL database name
      * @param host      MySQL database host
      * @param port      MySQL database port
-     * @return          String, valid JBDC URL
+     * @return          String, valid JDBC URL
      */
     private String buildConnectionUrl(String user, String pass, String database, String host, int port) {
         return String.format("jdbc:mysql://%s:%d/%s?user=%s&password=%s", host, port, database, user, pass);

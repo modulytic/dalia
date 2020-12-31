@@ -10,12 +10,14 @@ import java.util.Map;
  * Handle and route incoming WebSockets messages
  * @author  <a href="mailto:noah@modulytic.com">Noah Sandman</a>
  */
-public class WsdMessageHandler {
+public final class WsdMessageHandler {
+    private WsdMessageHandler() {}
+
     /**
      * Route incoming messages
      * @param message   Parsed message, received from WebSockets
      */
-    public void onMessage(WsdMessage message) {
+    public static void onMessage(WsdMessage message) {
         switch (message.getName()) {
             case "dlr_update.php":              // legacy
             case "dlr_update": {

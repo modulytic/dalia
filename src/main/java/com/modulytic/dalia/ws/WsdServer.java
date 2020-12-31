@@ -35,11 +35,6 @@ public class WsdServer extends WebSocketServer {
     private static int activeIndex;
 
     /**
-     * Handler for parsed messages
-     */
-    private static final WsdMessageHandler handler = new WsdMessageHandler();
-
-    /**
      * Status listeners
      */
     private static final Map<String, WsdStatusListener> pendingStatuses = new ConcurrentHashMap<>();
@@ -78,7 +73,7 @@ public class WsdServer extends WebSocketServer {
     }
 
     /**
-     * Parse message and pass to our {@link WsdMessageHandler}, {@link #handler}, if set
+     * Parse message and pass to our WsdMessageHandler
      * @param conn      connection message is received from
      * @param message   text of message
      */
@@ -102,8 +97,7 @@ public class WsdServer extends WebSocketServer {
             }
         }
         else {
-            if (handler != null)
-                handler.onMessage(wsdMessage);
+            WsdMessageHandler.onMessage(wsdMessage);
         }
     }
 

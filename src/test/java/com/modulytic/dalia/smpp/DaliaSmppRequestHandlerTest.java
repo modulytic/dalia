@@ -3,7 +3,7 @@ package com.modulytic.dalia.smpp;
 import com.modulytic.dalia.app.Context;
 import com.modulytic.dalia.app.database.include.Database;
 import com.modulytic.dalia.smpp.event.DaliaSmppRequestHandler;
-import com.modulytic.dalia.smpp.internal.SMSCAddress;
+import com.modulytic.dalia.smpp.internal.AppAddress;
 import com.modulytic.dalia.smpp.request.SubmitRequest;
 import com.modulytic.dalia.ws.WsdServer;
 import com.modulytic.dalia.ws.api.WsdMessage;
@@ -38,7 +38,7 @@ class DaliaSmppRequestHandlerTest {
 
     @Test
     void submitSmUnsupportedNPI() {
-        SMSCAddress address = mock(SMSCAddress.class);
+        AppAddress address = mock(AppAddress.class);
         when(address.getSupported()).thenReturn(true);
         when(address.isValidNpi()).thenReturn(false);
         when(address.isValidTon()).thenReturn(true);
@@ -56,7 +56,7 @@ class DaliaSmppRequestHandlerTest {
 
     @Test
     void submitSmUnsupportedTON() {
-        SMSCAddress address = mock(SMSCAddress.class);
+        AppAddress address = mock(AppAddress.class);
         when(address.getSupported()).thenReturn(true);
         when(address.isValidNpi()).thenReturn(true);
         when(address.isValidTon()).thenReturn(false);
@@ -74,7 +74,7 @@ class DaliaSmppRequestHandlerTest {
 
     @Test
     void submitSmUnsupportedDestAddress() {
-        SMSCAddress address = mock(SMSCAddress.class);
+        AppAddress address = mock(AppAddress.class);
         when(address.getSupported()).thenReturn(false);
         when(address.isValidNpi()).thenReturn(true);
         when(address.isValidTon()).thenReturn(true);
@@ -92,7 +92,7 @@ class DaliaSmppRequestHandlerTest {
 
     @Test
     void submitSmCallsDatabaseAndWebsocket() {
-        SMSCAddress address = mock(SMSCAddress.class);
+        AppAddress address = mock(AppAddress.class);
         when(address.getSupported()).thenReturn(true);
         when(address.isValidNpi()).thenReturn(true);
         when(address.isValidTon()).thenReturn(true);
@@ -127,7 +127,7 @@ class DaliaSmppRequestHandlerTest {
 
         handler.setSmppUser("smppuser");
 
-        SMSCAddress address = mock(SMSCAddress.class);
+        AppAddress address = mock(AppAddress.class);
         when(address.getSupported()).thenReturn(true);
         when(address.isValidNpi()).thenReturn(true);
         when(address.isValidTon()).thenReturn(true);
@@ -159,7 +159,7 @@ class DaliaSmppRequestHandlerTest {
 
         handler.setSmppUser("smppuser");
 
-        SMSCAddress address = mock(SMSCAddress.class);
+        AppAddress address = mock(AppAddress.class);
         when(address.getSupported()).thenReturn(true);
         when(address.isValidNpi()).thenReturn(true);
         when(address.isValidTon()).thenReturn(true);
@@ -188,7 +188,7 @@ class DaliaSmppRequestHandlerTest {
             return null;
         }).when(server).sendNext(any(WsdMessage.class), any(WsdStatusListener.class));
 
-        SMSCAddress address = mock(SMSCAddress.class);
+        AppAddress address = mock(AppAddress.class);
         when(address.getSupported()).thenReturn(true);
         when(address.isValidNpi()).thenReturn(true);
         when(address.isValidTon()).thenReturn(true);
@@ -211,7 +211,7 @@ class DaliaSmppRequestHandlerTest {
             return null;
         }).when(server).sendNext(any(WsdMessage.class), any(WsdStatusListener.class));
 
-        SMSCAddress address = mock(SMSCAddress.class);
+        AppAddress address = mock(AppAddress.class);
         when(address.getSupported()).thenReturn(true);
         when(address.isValidNpi()).thenReturn(true);
         when(address.isValidTon()).thenReturn(true);
