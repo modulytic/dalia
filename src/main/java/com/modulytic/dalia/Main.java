@@ -3,12 +3,8 @@ package com.modulytic.dalia;
 import com.cloudhopper.smpp.type.SmppChannelException;
 import com.modulytic.dalia.app.Constants;
 import com.modulytic.dalia.app.Context;
-import com.modulytic.dalia.app.Filesystem;
 import com.modulytic.dalia.app.database.MySqlDatabase;
 import com.modulytic.dalia.app.database.include.DatabaseConstants;
-import com.modulytic.dalia.smpp.HtpasswdAuthenticator;
-import com.modulytic.dalia.smpp.event.DaliaSmppRequestHandler;
-import com.modulytic.dalia.smpp.include.SmppRequestHandler;
 import com.modulytic.dalia.smpp.internal.AppSmppServer;
 import com.modulytic.dalia.ws.WsdServer;
 import com.modulytic.dalia.ws.WsdThreadSpawner;
@@ -42,11 +38,6 @@ public final class Main {
 
         // SMPP server
         final AppSmppServer smppServer = new AppSmppServer(Constants.SMPP_HOST_PORT);
-        smppServer.setPacketProcessor(DaliaSmppRequestHandler.class);
-
-        // Authenticator for new SMPP users
-        final String confPath = Filesystem.getPrefixFile(Constants.SMPP_CONF_FILENAME);
-        SmppRequestHandler.setAuthenticator(new HtpasswdAuthenticator(confPath));
 
         // Externally-accessible WebSockets server
         final WsdServer wsdServer = new WsdServer(Constants.WS_HOST_PORT);
