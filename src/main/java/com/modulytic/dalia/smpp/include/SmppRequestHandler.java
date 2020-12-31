@@ -80,7 +80,7 @@ public abstract class SmppRequestHandler implements PacketProcessor {
                 break;
 
             case SmppPacket.ENQUIRE_LINK:
-                this.onEnquireLink(res);
+                onEnquireLink(res);
                 break;
 
             case SmppPacket.CANCEL_SM:
@@ -121,7 +121,7 @@ public abstract class SmppRequestHandler implements PacketProcessor {
     /**
      * Keep connection open by acknowledging enquire_link PDUs
      */
-    private void onEnquireLink(ResponseSender responseSender) {
+    private static void onEnquireLink(ResponseSender responseSender) {
         responseSender.send(Response.OK);
     }
 

@@ -27,6 +27,15 @@ public final class Main {
     private static final Logger LOGGER = LoggerFactory.getLogger(Main.class);
 
     public static void main(String[] args) {
+        try {
+            main();
+        }
+        catch (IOException | SmppChannelException e) {
+            LOGGER.error("Error", e);
+        }
+    }
+
+    private static void main() throws SmppChannelException, IOException {
         // MySQL database
         final MySqlDatabase database = new MySqlDatabase(DatabaseConstants.USERNAME, DatabaseConstants.PASSWORD);
         Context.setDatabase(database);
@@ -37,27 +46,17 @@ public final class Main {
 
         // Authenticator for new SMPP users
         final String confPath = Filesystem.getPrefixFile(Constants.SMPP_CONF_FILENAME);
-        try {
-            SmppRequestHandler.setAuthenticator(new HtpasswdAuthenticator(confPath));
-        } catch (IOException e) {
-            LOGGER.error("IO Error", e);
-        }
+        SmppRequestHandler.setAuthenticator(new HtpasswdAuthenticator(confPath));
 
         // Externally-accessible WebSockets server
         final WsdServer wsdServer = new WsdServer(Constants.WS_HOST_PORT);
         WsdThreadSpawner.start(wsdServer);
 
-        try {
-            // when this program dies, free our resources
-            Runtime.getRuntime().addShutdownHook(new Thread(() -> {
-                smppServer.stop();
-                database.close();
-            }));
-
-            smppServer.start();
-        }
-        catch (SmppChannelException e) {
-            LOGGER.error(e.getMessage());
-        }
+        // when this program dies, free our resources
+        Runtime.getRuntime().addShutdownHook(new Thread(() -> {
+            smppServer.stop();
+            database.close();
+        }));
+        smppServer.start();
     }
 }

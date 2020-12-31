@@ -19,7 +19,7 @@ import net.gescobar.smppserver.packet.SmppRequest;
  * Handle PDUs and distribute incoming SMSes
  * @author  <a href="mailto:noah@modulytic.com">Noah Sandman</a>
  */
-public class DaliaSmppRequestHandler extends SmppRequestHandler {
+public final class DaliaSmppRequestHandler extends SmppRequestHandler {
     @SuppressWarnings("PMD.CyclomaticComplexity")
     private static void updateMessageStatus(String id, RegisteredDelivery registeredDelivery, MessageState newStatus) {
         if (id == null || registeredDelivery == null || newStatus == null)
@@ -91,8 +91,7 @@ public class DaliaSmppRequestHandler extends SmppRequestHandler {
             }
         };
 
-        final WsdServer wsdServer = Context.getWsdServer();
-        wsdServer.sendNext(submitSm.toEndpointRequest(), listener);
+        WsdServer.sendNext(submitSm.toEndpointRequest(), listener);
     }
 
     @Override

@@ -12,7 +12,7 @@ import org.slf4j.LoggerFactory;
  * Tools to interact with an SMPP session/ESME easily from Java
  * @author <a href="mailto:noah@modulytic.com">Noah Sandman</a>
  */
-public class DaliaSessionBridge {
+public final class DaliaSessionBridge {
     protected static final Logger LOGGER = LoggerFactory.getLogger(DaliaSessionBridge.class);
     private final SmppSession session;
     public DaliaSessionBridge(SmppSession sess) {

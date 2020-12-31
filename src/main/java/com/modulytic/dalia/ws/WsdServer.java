@@ -124,7 +124,7 @@ public class WsdServer extends WebSocketServer {
      * @param message   message to send
      */
     @SuppressWarnings("unused")
-    public void sendCurrent(WsdMessage message, WsdStatusListener listener) {
+    public static void sendCurrent(WsdMessage message, WsdStatusListener listener) {
         send(message, listener, false);
     }
 
@@ -132,7 +132,7 @@ public class WsdServer extends WebSocketServer {
      * Send message to client, and advance round-robin load distributor
      * @param message   message to send
      */
-    public void sendNext(WsdMessage message, WsdStatusListener listener) {
+    public static void sendNext(WsdMessage message, WsdStatusListener listener) {
         send(message, listener,true);
     }
 
@@ -141,7 +141,7 @@ public class WsdServer extends WebSocketServer {
      * @param message   message to send
      * @param advance   if true: advance round-robin load distributor, if false do not
      */
-    private void send(WsdMessage message, WsdStatusListener listener, boolean advance) {
+    private static void send(WsdMessage message, WsdStatusListener listener, boolean advance) {
         if (advance)
             activeIndex++;
 

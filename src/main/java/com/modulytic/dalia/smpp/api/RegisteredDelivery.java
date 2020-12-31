@@ -79,7 +79,7 @@ public class RegisteredDelivery {
      * @param pos   number of field
      * @return      true if field is set, or false if not
      */
-    private boolean checkBit(byte b, int pos) {
+    private static boolean checkBit(byte b, int pos) {
         return (b << ~pos < 0);
     }
 }

@@ -11,9 +11,11 @@ import com.modulytic.dalia.ws.api.WsdMessageCode;
 import com.modulytic.dalia.ws.include.WsdStatusListener;
 import net.gescobar.smppserver.Response;
 import net.gescobar.smppserver.ResponseSender;
+import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.BeforeEach;
 import org.mockito.ArgumentCaptor;
+import org.mockito.MockedStatic;
 
 import java.util.Map;
 
@@ -23,17 +25,22 @@ import static org.mockito.Mockito.*;
 class DaliaSmppRequestHandlerTest {
     DaliaSmppRequestHandler handler;
     Database database;
-    WsdServer server;
+    static MockedStatic<WsdServer> wsd = mockStatic(WsdServer.class);
 
     @BeforeEach
     void setup() {
+        database = mock(Database.class);
+        Context.setDatabase(database);
+
         handler = new DaliaSmppRequestHandler();
         handler.setSmppUser("smppuser");
-        database = mock(Database.class);
-        server = mock(WsdServer.class);
 
-        Context.setDatabase(database);
-        Context.setWsdServer(server);
+        wsd.reset();
+    }
+
+    @AfterAll
+    static void end() {
+        wsd.close();
     }
 
     @Test
@@ -106,26 +113,25 @@ class DaliaSmppRequestHandlerTest {
         handler.onSubmitSm(req, res);
 
         verify(database, times(1)).fetch(anyString(), any(Map.class));
-        verify(server, times(1)).sendNext(any(WsdMessage.class), any(WsdStatusListener.class));
+        wsd.verify(() -> WsdServer.sendNext(any(WsdMessage.class), any(WsdStatusListener.class)));
     }
 
     @Test
     void submitSmReturnsNoClientsError() {
         ResponseSender res = mock(ResponseSender.class);
 
-        doAnswer(invocation -> {
-            Object[] args = invocation.getArguments();
-            WsdStatusListener listener = (WsdStatusListener) args[1];
-            listener.onStatus(WsdMessageCode.NO_CLIENTS);
+        wsd.when(() -> WsdServer.sendNext(any(WsdMessage.class), any(WsdStatusListener.class)))
+            .then(invocation -> {
+                Object[] args = invocation.getArguments();
+                WsdStatusListener listener = (WsdStatusListener) args[1];
+                listener.onStatus(WsdMessageCode.NO_CLIENTS);
 
-            ArgumentCaptor<Response> argument = ArgumentCaptor.forClass(Response.class);
-            verify(res).send(argument.capture());
-            assertEquals(Response.SYSTEM_ERROR, argument.getValue());
+                ArgumentCaptor<Response> argument = ArgumentCaptor.forClass(Response.class);
+                verify(res).send(argument.capture());
+                assertEquals(Response.SYSTEM_ERROR, argument.getValue());
 
-            return null;
-        }).when(server).sendNext(any(WsdMessage.class), any(WsdStatusListener.class));
-
-        handler.setSmppUser("smppuser");
+                return null;
+            });
 
         AppAddress address = mock(AppAddress.class);
         when(address.getSupported()).thenReturn(true);
@@ -144,20 +150,18 @@ class DaliaSmppRequestHandlerTest {
     void submitSmReturnsSendError() {
         ResponseSender res = mock(ResponseSender.class);
 
-        WsdServer server = mock(WsdServer.class);
-        doAnswer(invocation -> {
-            Object[] args = invocation.getArguments();
-            WsdStatusListener listener = (WsdStatusListener) args[1];
-            listener.onStatus(3);       // random non-success code
+        wsd.when(() -> WsdServer.sendNext(any(WsdMessage.class), any(WsdStatusListener.class)))
+            .then(invocation -> {
+                Object[] args = invocation.getArguments();
+                WsdStatusListener listener = (WsdStatusListener) args[1];
+                listener.onStatus(3);       // random non-success code
 
-            ArgumentCaptor<Response> argument = ArgumentCaptor.forClass(Response.class);
-            verify(res).send(argument.capture());
-            assertEquals(Response.SYSTEM_ERROR, argument.getValue());
+                ArgumentCaptor<Response> argument = ArgumentCaptor.forClass(Response.class);
+                verify(res).send(argument.capture());
+                assertEquals(Response.SYSTEM_ERROR, argument.getValue());
 
-            return null;
-        }).when(server).sendNext(any(WsdMessage.class), any(WsdStatusListener.class));
-
-        handler.setSmppUser("smppuser");
+                return null;
+            });
 
         AppAddress address = mock(AppAddress.class);
         when(address.getSupported()).thenReturn(true);
@@ -176,17 +180,18 @@ class DaliaSmppRequestHandlerTest {
     void submitSmReturnsSuccessOnWsDaemonSuccess() {
         ResponseSender res = mock(ResponseSender.class);
 
-        doAnswer(invocation -> {
-            Object[] args = invocation.getArguments();
-            WsdStatusListener listener = (WsdStatusListener) args[1];
-            listener.onStatus(WsdMessageCode.SUCCESS);       // random non-success code
+        wsd.when(() -> WsdServer.sendNext(any(WsdMessage.class), any(WsdStatusListener.class)))
+            .then(invocation -> {
+                Object[] args = invocation.getArguments();
+                WsdStatusListener listener = (WsdStatusListener) args[1];
+                listener.onStatus(WsdMessageCode.SUCCESS);       // random non-success code
 
-            ArgumentCaptor<Response> argument = ArgumentCaptor.forClass(Response.class);
-            verify(res).send(argument.capture());
-            assertEquals(Response.OK, argument.getValue());
+                ArgumentCaptor<Response> argument = ArgumentCaptor.forClass(Response.class);
+                verify(res).send(argument.capture());
+                assertEquals(Response.OK, argument.getValue());
 
-            return null;
-        }).when(server).sendNext(any(WsdMessage.class), any(WsdStatusListener.class));
+                return null;
+            });
 
         AppAddress address = mock(AppAddress.class);
         when(address.getSupported()).thenReturn(true);
@@ -204,12 +209,13 @@ class DaliaSmppRequestHandlerTest {
     @Test
     void submitSmCanPersistDlrToDatabase() {
         // tell Dalia message was sent successfully
-        doAnswer(invocation -> {
-            Object[] args = invocation.getArguments();
-            WsdStatusListener listener = (WsdStatusListener) args[1];
-            listener.onStatus(WsdMessageCode.SUCCESS);
-            return null;
-        }).when(server).sendNext(any(WsdMessage.class), any(WsdStatusListener.class));
+        wsd.when(() -> WsdServer.sendNext(any(WsdMessage.class), any(WsdStatusListener.class)))
+            .then(invocation -> {
+                Object[] args = invocation.getArguments();
+                WsdStatusListener listener = (WsdStatusListener) args[1];
+                listener.onStatus(WsdMessageCode.SUCCESS);
+                return null;
+            });
 
         AppAddress address = mock(AppAddress.class);
         when(address.getSupported()).thenReturn(true);
@@ -226,7 +232,8 @@ class DaliaSmppRequestHandlerTest {
         ResponseSender res = mock(ResponseSender.class);
         handler.onSubmitSm(req, res);
         verify(database, times(1)).fetch(anyString(), any(Map.class));
-        verify(server, times(1)).sendNext(any(WsdMessage.class), any(WsdStatusListener.class));
         verify(req, times(1)).persistDLRParamsTo(any(Database.class));
+
+        wsd.verify(() -> WsdServer.sendNext(any(WsdMessage.class), any(WsdStatusListener.class)));
     }
 }

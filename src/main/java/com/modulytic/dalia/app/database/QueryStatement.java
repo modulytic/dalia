@@ -7,7 +7,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 
-public class QueryStatement implements AutoCloseable, Updateable {
+class QueryStatement implements AutoCloseable, Updateable {
     private final PreparedStatement statement;
     private transient int paramIndex = 1;
     public QueryStatement(PreparedStatement statement) {

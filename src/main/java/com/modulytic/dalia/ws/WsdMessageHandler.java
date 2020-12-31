@@ -10,7 +10,7 @@ import java.util.Map;
  * Handle and route incoming WebSockets messages
  * @author  <a href="mailto:noah@modulytic.com">Noah Sandman</a>
  */
-public final class WsdMessageHandler {
+final class WsdMessageHandler {
     private WsdMessageHandler() {}
 
     /**
