@@ -39,7 +39,4 @@ public final class DatabaseConstants {
     public static final String LOG_TABLE = "billing_logs";
     public static final String VROUTE    = "vroute";
     public static final String RATE      = "rate";
-    
-    public static final int TRUE  = 1;
-    public static final int FALSE = 0;
 }

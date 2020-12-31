@@ -9,7 +9,6 @@ import java.util.UUID;
  * Ws-daemon message, handled by Gson
  * @author  <a href="mailto:noah@modulytic.com">Noah Sandman</a>
  */
-@SuppressWarnings("unused")
 public class WsdMessage {
     /**
      * name field, specifies action to take

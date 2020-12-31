@@ -11,8 +11,6 @@ import java.util.Map;
  * @author  <a href="mailto:noah@modulytic.com">Noah Sandman</a>
  */
 public class WsdMessageHandler {
-    private static final DLRUpdateHandler dlrUpdateHandler = new DLRUpdateHandler();
-
     /**
      * Route incoming messages
      * @param message   Parsed message, received from WebSockets
@@ -27,7 +25,7 @@ public class WsdMessageHandler {
                 String statusRaw    = (String) params.get("new_status");
                 MessageState status = MessageState.fromCode(statusRaw);
 
-                dlrUpdateHandler.updateStatus(id, status);
+                DLRUpdateHandler.updateStatus(id, status);
                 break;
             }
 

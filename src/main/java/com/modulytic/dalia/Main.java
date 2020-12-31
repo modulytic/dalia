@@ -5,7 +5,6 @@ import com.modulytic.dalia.app.Constants;
 import com.modulytic.dalia.app.Context;
 import com.modulytic.dalia.app.database.MySqlDatabase;
 import com.modulytic.dalia.app.database.include.DatabaseConstants;
-import com.modulytic.dalia.smpp.event.DLRUpdateHandler;
 import com.modulytic.dalia.smpp.DaliaPacketProcessor;
 import com.modulytic.dalia.smpp.event.DaliaSmppSessionListener;
 import com.modulytic.dalia.ws.WsdServer;
@@ -35,10 +34,6 @@ public final class Main {
         // SMPP server
         final DaliaPacketProcessor packetProcessor = new DaliaPacketProcessor();
         SmppServer smppServer = new SmppServer(Constants.SMPP_HOST_PORT, packetProcessor);
-
-        // Handler for incoming message state updates
-        final DLRUpdateHandler updateHandler = new DLRUpdateHandler();
-        Context.setDLRUpdateHandler(updateHandler);
 
         // Externally-accessible WebSockets server
         final WsdServer wsdServer = new WsdServer(Constants.WS_HOST_PORT);

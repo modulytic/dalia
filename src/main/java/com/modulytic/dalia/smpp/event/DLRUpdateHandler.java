@@ -13,16 +13,18 @@ import org.slf4j.LoggerFactory;
  * Handles the receipt of new message statuses from {@link WsdServer WebSockets}
  * @author <a href="mailto:noah@modulytic.com">Noah Sandman</a>
  */
-public class DLRUpdateHandler {
-    protected static final transient Logger LOGGER = LoggerFactory.getLogger(WsdServer.class);
+public final class DLRUpdateHandler {
+    private DLRUpdateHandler() {}
+
+    private static final transient Logger LOGGER = LoggerFactory.getLogger(WsdServer.class);
 
     /**
      * Set and send a new status for a message where DLRs were requested
      * @param messageId message assigned when submit_sm was received
      * @param status    new {@link MessageState status}
      */
-    public void updateStatus(String messageId, MessageState status) {
-        if (Context.getDatabase() == null)
+    public static void updateStatus(String messageId, MessageState status) {
+        if (Context.getDatabase() == null)      // for request.persistNewStatus
             return;
 
         DLRRequest request = new DLRRequest(messageId);

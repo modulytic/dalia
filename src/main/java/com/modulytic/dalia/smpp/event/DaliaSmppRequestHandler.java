@@ -28,9 +28,6 @@ public class DaliaSmppRequestHandler extends SmppRequestHandler {
         if (!registeredDelivery.getForwardDlrs())
             return;
 
-        if (Context.getDLRUpdateHandler() == null)
-            return;
-
         if (registeredDelivery.getFailureOnly() && !MessageState.isError(newStatus))
             return;
         else if (!registeredDelivery.getIntermediate() && !MessageState.isFinal(newStatus))
@@ -38,8 +35,7 @@ public class DaliaSmppRequestHandler extends SmppRequestHandler {
         else if (!registeredDelivery.getReceiveFinal() && MessageState.isFinal(newStatus))
             return;
 
-        final DLRUpdateHandler dlrUpdateHandler = Context.getDLRUpdateHandler();
-        dlrUpdateHandler.updateStatus(id, newStatus);
+        DLRUpdateHandler.updateStatus(id, newStatus);
     }
 
     // TODO handle replace if present on submit_sm
