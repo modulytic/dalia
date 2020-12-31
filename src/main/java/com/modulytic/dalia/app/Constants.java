@@ -25,7 +25,7 @@ public final class Constants {
     /**
      * Filename to look for SMPP users in
      */
-    public static final String SMPP_CONF_FILENAME = "smpp_users.json";
+    public static final String SMPP_CONF_FILENAME = "htpasswd";
 
     /**
      * Port to host SMPP server on

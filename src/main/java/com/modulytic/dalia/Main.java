@@ -6,7 +6,7 @@ import com.modulytic.dalia.app.Context;
 import com.modulytic.dalia.app.Filesystem;
 import com.modulytic.dalia.app.database.MySqlDatabase;
 import com.modulytic.dalia.app.database.include.DatabaseConstants;
-import com.modulytic.dalia.smpp.JsonAuthenticator;
+import com.modulytic.dalia.smpp.HtpasswdAuthenticator;
 import com.modulytic.dalia.smpp.event.DaliaSmppRequestHandler;
 import com.modulytic.dalia.smpp.include.SmppRequestHandler;
 import com.modulytic.dalia.smpp.internal.AppSmppServer;
@@ -14,6 +14,8 @@ import com.modulytic.dalia.ws.WsdServer;
 import com.modulytic.dalia.ws.WsdThreadSpawner;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.io.IOException;
 
 /**
  * Main class, entrypoint into program
@@ -35,7 +37,11 @@ public final class Main {
 
         // Authenticator for new SMPP users
         final String confPath = Filesystem.getPrefixFile(Constants.SMPP_CONF_FILENAME);
-        SmppRequestHandler.setAuthenticator(new JsonAuthenticator(confPath));
+        try {
+            SmppRequestHandler.setAuthenticator(new HtpasswdAuthenticator(confPath));
+        } catch (IOException e) {
+            LOGGER.error("IO Error", e);
+        }
 
         // Externally-accessible WebSockets server
         final WsdServer wsdServer = new WsdServer(Constants.WS_HOST_PORT);

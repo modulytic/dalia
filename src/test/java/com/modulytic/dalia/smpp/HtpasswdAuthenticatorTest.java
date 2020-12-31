@@ -9,10 +9,11 @@ import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-class JsonAuthenticatorTest {
+class HtpasswdAuthenticatorTest {
     @Test
     void authWithNoCredentials() {
-        JsonAuthenticator authenticator = new JsonAuthenticator(new HashMap<>());
+        HtpasswdAuthenticator authenticator = new HtpasswdAuthenticator();
+        authenticator.appendCredentials(new HashMap<>());
 
         Response res = authenticator.auth("user", "pass");
         assertEquals(Response.INVALID_SYSTEM_ID, res);
@@ -21,7 +22,8 @@ class JsonAuthenticatorTest {
     @Test
     void authWithWrongUsername() {
         Map<String, String> credentials = ImmutableMap.of("smppuser", "password");
-        JsonAuthenticator authenticator = new JsonAuthenticator(credentials);
+        HtpasswdAuthenticator authenticator = new HtpasswdAuthenticator();
+        authenticator.appendCredentials(credentials);
 
         Response res = authenticator.auth("user", "pass");
         assertEquals(Response.INVALID_SYSTEM_ID, res);
@@ -30,7 +32,8 @@ class JsonAuthenticatorTest {
     @Test
     void authWithWrongPassword() {
         Map<String, String> credentials = ImmutableMap.of("smppuser", "password");
-        JsonAuthenticator authenticator = new JsonAuthenticator(credentials);
+        HtpasswdAuthenticator authenticator = new HtpasswdAuthenticator();
+        authenticator.appendCredentials(credentials);
 
         Response res = authenticator.auth("smppuser", "pass");
         assertEquals(Response.INVALID_PASSWORD, res);
@@ -39,7 +42,8 @@ class JsonAuthenticatorTest {
     @Test
     void authNull() {
         Map<String, String> credentials = ImmutableMap.of("smppuser", "password");
-        JsonAuthenticator authenticator = new JsonAuthenticator(credentials);
+        HtpasswdAuthenticator authenticator = new HtpasswdAuthenticator();
+        authenticator.appendCredentials(credentials);
 
         Response res1 = authenticator.auth(null, "pass");
         assertEquals(Response.MISSING_EXPECTED_PARAMETER, res1);
