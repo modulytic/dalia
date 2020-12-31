@@ -1,6 +1,6 @@
 # Dalia
 
-[![Codefresh build status]( https://g.codefresh.io/api/badges/pipeline/modulytic/termination%2Fproxy?type=cf-1&key=eyJhbGciOiJIUzI1NiJ9.NWZjYjA2OGZmOTQ1OWY3Zjk0NjUwNzVl.PuhYMjEHVPDPkCHWOb147hlRktJdQtMHKmMPcwmxIsc)]( https://g.codefresh.io/pipelines/edit/new/builds?id=5fcb071f84fbdcd099bf1a38&pipeline=proxy&projects=termination&projectId=5fcb071610d31edec2bd9b27)
+![Unit Tests](https://github.com/modulytic/dalia/workflows/Unit%20Tests/badge.svg)
 
 Dalia is an SMSC written in Java that distributes messages to [endpoints](https://github.com/modulytic/termination-endpoint). It replaces the old Modulytic SMSC, based on [Jasmin](https://github.com/jookies/jasmin), archived [here](https://github.com/modulytic/termination-proxy).
 
