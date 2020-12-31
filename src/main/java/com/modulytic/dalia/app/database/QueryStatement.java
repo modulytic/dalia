@@ -1,7 +1,6 @@
 package com.modulytic.dalia.app.database;
 
 import com.modulytic.dalia.app.database.include.Updateable;
-import org.checkerframework.checker.nullness.qual.NonNull;
 
 import java.sql.*;
 import java.time.LocalDate;
@@ -20,7 +19,7 @@ public class QueryStatement implements AutoCloseable, Updateable {
     }
 
     @Override
-    public void add(@NonNull String s) throws SQLException {
+    public void add(String s) throws SQLException {
         statement.setString(paramIndex, s);
         postAdd();
     }
@@ -50,13 +49,13 @@ public class QueryStatement implements AutoCloseable, Updateable {
     }
 
     @Override
-    public void add(@NonNull LocalDateTime dt) throws SQLException {
+    public void add(LocalDateTime dt) throws SQLException {
         statement.setString(paramIndex, dt.format(DateTimeFormatter.ofPattern("uuuu-MM-dd HH:mm:ss")));
         postAdd();
     }
 
     @Override
-    public void add(@NonNull LocalDate d) throws SQLException {
+    public void add(LocalDate d) throws SQLException {
         statement.setString(paramIndex, d.format(DateTimeFormatter.ofPattern("uuuu-MM-dd")));
         postAdd();
     }

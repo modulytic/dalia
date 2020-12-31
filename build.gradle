@@ -28,12 +28,12 @@ test {
 dependencies {
     testImplementation 'org.junit.jupiter:junit-jupiter:5.4.2'
     testImplementation 'org.mockito:mockito-core:3.6.28'
+    testImplementation 'com.google.guava:guava:30.0-jre'
 
     implementation fileTree(include: ['*.jar'], dir: 'libs')
     implementation 'org.slf4j:slf4j-simple:2.0.0-alpha1'
     implementation 'com.google.code.gson:gson:2.8.6'
     implementation 'com.googlecode.libphonenumber:libphonenumber:8.12.13'
-    implementation 'com.google.guava:guava:30.0-jre'
     implementation 'commons-codec:commons-codec:1.15'
     implementation 'mysql:mysql-connector-java:8.0.22'
     implementation 'org.java-websocket:Java-WebSocket:1.5.1'
