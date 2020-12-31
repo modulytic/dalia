@@ -1,7 +1,7 @@
 package com.modulytic.dalia.ws;
 
 import com.google.gson.Gson;
-import com.modulytic.dalia.Constants;
+import com.modulytic.dalia.app.Constants;
 import com.modulytic.dalia.ws.api.WsdMessage;
 import com.modulytic.dalia.ws.api.WsdMessageCode;
 import com.modulytic.dalia.ws.include.WsdStatusListener;

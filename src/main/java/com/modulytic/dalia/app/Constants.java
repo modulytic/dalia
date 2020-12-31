@@ -1,4 +1,4 @@
-package com.modulytic.dalia;
+package com.modulytic.dalia.app;
 
 /**
  * Constants relevant to the program that should be easy to change

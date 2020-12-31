@@ -1,5 +1,6 @@
 package com.modulytic.dalia.smpp.api;
 
+import com.modulytic.dalia.smpp.internal.SMSCAddress;
 import net.gescobar.smppserver.packet.Address;
 import org.junit.jupiter.api.Test;
 

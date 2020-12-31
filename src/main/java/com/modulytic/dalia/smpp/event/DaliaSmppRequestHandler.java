@@ -1,12 +1,12 @@
-package com.modulytic.dalia.smpp;
+package com.modulytic.dalia.smpp.event;
 
-import com.modulytic.dalia.DaliaContext;
+import com.modulytic.dalia.app.Context;
+import com.modulytic.dalia.billing.Billing;
 import com.modulytic.dalia.billing.Vroute;
-import com.modulytic.dalia.billing.BillingManager;
 import com.modulytic.dalia.smpp.api.MessageState;
 import com.modulytic.dalia.smpp.api.RegisteredDelivery;
 import com.modulytic.dalia.smpp.request.SubmitRequest;
-import com.modulytic.dalia.smpp.api.SMSCAddress;
+import com.modulytic.dalia.smpp.internal.SMSCAddress;
 import com.modulytic.dalia.smpp.include.SmppRequestHandler;
 import com.modulytic.dalia.ws.WsdServer;
 import com.modulytic.dalia.ws.api.WsdMessageCode;
@@ -28,7 +28,7 @@ public class DaliaSmppRequestHandler extends SmppRequestHandler {
         if (!registeredDelivery.getForwardDlrs())
             return;
 
-        if (DaliaContext.getDLRUpdateHandler() == null)
+        if (Context.getDLRUpdateHandler() == null)
             return;
 
         if (registeredDelivery.getFailureOnly() && !MessageState.isError(newStatus))
@@ -38,7 +38,7 @@ public class DaliaSmppRequestHandler extends SmppRequestHandler {
         else if (!registeredDelivery.getReceiveFinal() && MessageState.isFinal(newStatus))
             return;
 
-        final DLRUpdateHandler dlrUpdateHandler = DaliaContext.getDLRUpdateHandler();
+        final DLRUpdateHandler dlrUpdateHandler = Context.getDLRUpdateHandler();
         dlrUpdateHandler.updateStatus(id, newStatus);
     }
 
@@ -64,9 +64,8 @@ public class DaliaSmppRequestHandler extends SmppRequestHandler {
         }
 
         // save message to our database for billing purposes
-        BillingManager billingManager = new BillingManager();
-        Vroute vroute = billingManager.getActiveVroute(dest.getCountryCode());
-        billingManager.logMessage(submitSm.getMessageId(), getSmppUser(), dest.getCountryCode(), vroute);
+        Vroute vroute = Vroute.getActiveVroute(dest.getCountryCode());
+        Billing.logMessage(submitSm.getMessageId(), getSmppUser(), dest.getCountryCode(), vroute);
 
         WsdStatusListener listener = new WsdStatusListener() {
             @Override
@@ -74,7 +73,7 @@ public class DaliaSmppRequestHandler extends SmppRequestHandler {
                 if (status == WsdMessageCode.SUCCESS) {
                     LOGGER.info(String.format("Message '%s' successfully sent", submitSm.getMessageId()));
                     if (submitSm.getShouldForwardDLRs()) {
-                        submitSm.persistDLRParamsTo(DaliaContext.getDatabase());
+                        submitSm.persistDLRParamsTo(Context.getDatabase());
 
                         // if intermediate DLRs requested, send accepted/en_route
                         updateMessageStatus(submitSm.getMessageId(), submitSm.getDaliaRegisteredDelivery(), MessageState.EN_ROUTE);
@@ -96,7 +95,7 @@ public class DaliaSmppRequestHandler extends SmppRequestHandler {
             }
         };
 
-        final WsdServer wsdServer = DaliaContext.getWsdServer();
+        final WsdServer wsdServer = Context.getWsdServer();
         wsdServer.sendNext(submitSm.toEndpointRequest(), listener);
     }
 

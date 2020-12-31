@@ -1,6 +1,6 @@
 package com.modulytic.dalia.ws;
 
-import com.modulytic.dalia.smpp.DLRUpdateHandler;
+import com.modulytic.dalia.smpp.event.DLRUpdateHandler;
 import com.modulytic.dalia.smpp.api.MessageState;
 import com.modulytic.dalia.ws.api.WsdMessage;
 

@@ -1,7 +1,7 @@
 package com.modulytic.dalia.smpp.include;
 
-import com.modulytic.dalia.DaliaContext;
-import com.modulytic.dalia.smpp.DaliaSmppSessionListener;
+import com.modulytic.dalia.app.Context;
+import com.modulytic.dalia.smpp.event.DaliaSmppSessionListener;
 import com.modulytic.dalia.smpp.request.SubmitRequest;
 import net.gescobar.smppserver.Response;
 import net.gescobar.smppserver.ResponseSender;
@@ -35,7 +35,7 @@ public abstract class SmppRequestHandler {
     @SuppressWarnings("PMD.CyclomaticComplexity")       // needed for routing
     public void onSmppRequest(SmppRequest req, ResponseSender res) {
         // make sure listener is defined
-        if (DaliaContext.getSessionListener() == null) {
+        if (Context.getSessionListener() == null) {
             LOGGER.error("Fatal error: No listener specified in request router!!!");
             res.send(Response.SYSTEM_ERROR);
             return;
@@ -81,6 +81,10 @@ public abstract class SmppRequestHandler {
         }
     }
 
+    public void setSmppUser(String smppuser) {
+        this.smppUser = smppuser;
+    }
+
     public String getSmppUser() {
         return this.smppUser;
     }
@@ -96,7 +100,7 @@ public abstract class SmppRequestHandler {
      * @param bind  bind packet
      */
     private void onBind(Bind bind, ResponseSender responseSender) {
-        final DaliaSmppSessionListener sessionListener = DaliaContext.getSessionListener();
+        final DaliaSmppSessionListener sessionListener = Context.getSessionListener();
 
         // if no authenticator, always fail
         if (authenticator == null) {

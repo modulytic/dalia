@@ -1,4 +1,4 @@
-package com.modulytic.dalia.local;
+package com.modulytic.dalia.app.database;
 
 import com.google.common.collect.ImmutableSet;
 import org.junit.jupiter.api.Test;
@@ -15,7 +15,7 @@ import java.util.Set;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
-class MySqlDbManagerTest {
+class MySqlDatabaseTest {
     private LinkedHashMap<String, Object> getDbParams() {
         // TODO make database manager escape single quotes
         LocalDateTime timestamp = LocalDateTime.of(2001, 6, 27, 1, 5, 45, 0);
@@ -40,7 +40,7 @@ class MySqlDbManagerTest {
         Connection connection = mock(Connection.class);
         when(connection.prepareStatement(anyString())).thenReturn(statement);
 
-        MySqlDbManager database = new MySqlDbManager(connection);
+        MySqlDatabase database = new MySqlDatabase(connection);
 
         LinkedHashMap<String, Object> values = getDbParams();
 
@@ -51,11 +51,12 @@ class MySqlDbManagerTest {
         verify(connection).prepareStatement(argument.capture());
         assertEquals(expectedQuery, argument.getValue());
 
+        // string and LocalDate and LocalDateTime
         verify(statement, times(3)).setString(anyInt(), anyString());
         verify(statement, times(1)).setNull(anyInt(), anyInt());
         verify(statement, times(1)).setInt(anyInt(), anyInt());
-        verify(statement, times(1)).setFloat(anyInt(), anyFloat());
         verify(statement, times(1)).setBoolean(anyInt(), anyBoolean());
+        verify(statement, times(1)).setFloat(anyInt(), anyFloat());
         verify(statement, times(1)).executeUpdate();
     }
 
@@ -65,7 +66,7 @@ class MySqlDbManagerTest {
         Connection connection = mock(Connection.class);
         when(connection.prepareStatement(anyString())).thenReturn(statement);
 
-        MySqlDbManager database = new MySqlDbManager(connection);
+        MySqlDatabase database = new MySqlDatabase(connection);
 
         LinkedHashMap<String, Object> values = getDbParams();
 
@@ -76,11 +77,12 @@ class MySqlDbManagerTest {
         verify(connection).prepareStatement(argument.capture());
         assertEquals(expectedQuery, argument.getValue());
 
+        // string and LocalDate and LocalDateTime
         verify(statement, times(3)).setString(anyInt(), anyString());
         verify(statement, times(1)).setNull(anyInt(), anyInt());
         verify(statement, times(1)).setInt(anyInt(), anyInt());
-        verify(statement, times(1)).setFloat(anyInt(), anyFloat());
         verify(statement, times(1)).setBoolean(anyInt(), anyBoolean());
+        verify(statement, times(1)).setFloat(anyInt(), anyFloat());
         verify(statement, times(1)).execute();
     }
 
@@ -90,7 +92,7 @@ class MySqlDbManagerTest {
         Connection connection = mock(Connection.class);
         when(connection.prepareStatement(anyString())).thenReturn(statement);
 
-        MySqlDbManager database = new MySqlDbManager(connection);
+        MySqlDatabase database = new MySqlDatabase(connection);
 
         LinkedHashMap<String, Object> values = getDbParams();
         Set<String> columns = ImmutableSet.of("col1", "col2");
@@ -102,11 +104,12 @@ class MySqlDbManagerTest {
         verify(connection).prepareStatement(argument.capture());
         assertEquals(expectedQuery, argument.getValue());
 
+        // string and LocalDate and LocalDateTime
         verify(statement, times(3)).setString(anyInt(), anyString());
         verify(statement, times(1)).setNull(anyInt(), anyInt());
         verify(statement, times(1)).setInt(anyInt(), anyInt());
-        verify(statement, times(1)).setFloat(anyInt(), anyFloat());
         verify(statement, times(1)).setBoolean(anyInt(), anyBoolean());
+        verify(statement, times(1)).setFloat(anyInt(), anyFloat());
         verify(statement, times(1)).execute();
     }
 
@@ -116,7 +119,7 @@ class MySqlDbManagerTest {
         Connection connection = mock(Connection.class);
         when(connection.prepareStatement(anyString())).thenReturn(statement);
 
-        MySqlDbManager database = new MySqlDbManager(connection);
+        MySqlDatabase database = new MySqlDatabase(connection);
 
         LinkedHashMap<String, Object> values = getDbParams();
 
@@ -127,11 +130,12 @@ class MySqlDbManagerTest {
         verify(connection).prepareStatement(argument.capture());
         assertEquals(expectedQuery, argument.getValue());
 
+        // string and LocalDate and LocalDateTime
         verify(statement, times(6)).setString(anyInt(), anyString());
         verify(statement, times(2)).setNull(anyInt(), anyInt());
         verify(statement, times(2)).setInt(anyInt(), anyInt());
-        verify(statement, times(2)).setFloat(anyInt(), anyFloat());
         verify(statement, times(2)).setBoolean(anyInt(), anyBoolean());
+        verify(statement, times(2)).setFloat(anyInt(), anyFloat());
         verify(statement, times(1)).executeUpdate();
     }
 }

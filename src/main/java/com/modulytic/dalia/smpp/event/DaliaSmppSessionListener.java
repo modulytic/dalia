@@ -1,5 +1,6 @@
-package com.modulytic.dalia.smpp;
+package com.modulytic.dalia.smpp.event;
 
+import com.modulytic.dalia.smpp.DaliaSessionBridge;
 import net.gescobar.smppserver.SmppSession;
 import net.gescobar.smppserver.SmppSessionListener;
 

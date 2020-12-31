@@ -1,9 +1,11 @@
-package com.modulytic.dalia.smpp.api;
+package com.modulytic.dalia.smpp.internal;
 
 import com.google.i18n.phonenumbers.NumberParseException;
 import com.google.i18n.phonenumbers.PhoneNumberUtil;
 import com.google.i18n.phonenumbers.Phonenumber.PhoneNumber;
-import com.modulytic.dalia.Constants;
+import com.modulytic.dalia.app.Constants;
+import com.modulytic.dalia.smpp.api.NPI;
+import com.modulytic.dalia.smpp.api.TON;
 import net.gescobar.smppserver.packet.Address;
 
 /**

@@ -1,6 +1,7 @@
-package com.modulytic.dalia.smpp;
+package com.modulytic.dalia.smpp.event;
 
-import com.modulytic.dalia.DaliaContext;
+import com.modulytic.dalia.app.Context;
+import com.modulytic.dalia.smpp.DaliaSessionBridge;
 import com.modulytic.dalia.smpp.request.DLRRequest;
 import com.modulytic.dalia.smpp.api.DeliveryReport;
 import com.modulytic.dalia.smpp.api.MessageState;
@@ -21,7 +22,7 @@ public class DLRUpdateHandler {
      * @param status    new {@link MessageState status}
      */
     public void updateStatus(String messageId, MessageState status) {
-        if (DaliaContext.getDatabase() == null)
+        if (Context.getDatabase() == null)
             return;
 
         DLRRequest request = new DLRRequest(messageId);

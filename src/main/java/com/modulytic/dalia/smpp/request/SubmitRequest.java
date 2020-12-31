@@ -1,8 +1,8 @@
 package com.modulytic.dalia.smpp.request;
 
-import com.modulytic.dalia.local.include.DbManager;
+import com.modulytic.dalia.app.database.include.Database;
 import com.modulytic.dalia.smpp.api.RegisteredDelivery;
-import com.modulytic.dalia.smpp.api.SMSCAddress;
+import com.modulytic.dalia.smpp.internal.SMSCAddress;
 import com.modulytic.dalia.ws.api.WsdMessage;
 import net.gescobar.smppserver.packet.SubmitSm;
 
@@ -91,7 +91,7 @@ public class SubmitRequest extends SubmitSm {
         return daliaRegisteredDelivery;
     }
 
-    public void persistDLRParamsTo(DbManager database) {
+    public void persistDLRParamsTo(Database database) {
         LinkedHashMap<String, Object> values = new LinkedHashMap<>();
         values.put("msg_id", getMessageId());
         values.put("src_addr", getDestAddress());

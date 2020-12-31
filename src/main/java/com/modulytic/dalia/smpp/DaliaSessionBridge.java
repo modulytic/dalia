@@ -1,6 +1,6 @@
 package com.modulytic.dalia.smpp;
 
-import com.modulytic.dalia.Constants;
+import com.modulytic.dalia.app.Constants;
 import net.gescobar.smppserver.SmppException;
 import net.gescobar.smppserver.SmppSession;
 import net.gescobar.smppserver.packet.SmppRequest;

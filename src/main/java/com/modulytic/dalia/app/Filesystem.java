@@ -1,6 +1,4 @@
-package com.modulytic.dalia.local;
-
-import com.modulytic.dalia.Constants;
+package com.modulytic.dalia.app;
 
 import java.io.File;
 
@@ -8,8 +6,8 @@ import java.io.File;
  * Manage Dalia configuration
  * @author <a href="mailto:noah@modulytic.com">Noah Sandman</a>
  */
-public final class Config {
-    private Config() {}
+public final class Filesystem {
+    private Filesystem() {}
 
     /**
      * Get prefix directory, check {@link Constants#ENV_PREFIX environment variable}, fall back to {@link Constants#PREFIX_FALLBACK}

@@ -1,6 +1,6 @@
-package com.modulytic.dalia.local;
+package com.modulytic.dalia.app.database;
 
-import com.google.common.collect.Table;
+import com.modulytic.dalia.app.database.include.Updateable;
 import org.checkerframework.checker.nullness.qual.NonNull;
 
 import java.sql.*;
@@ -82,10 +82,9 @@ public class QueryStatement implements AutoCloseable, Updateable {
         }
     }
 
-    public Table<Integer, String, Object> execute() throws SQLException {
+    public DatabaseResults execute() throws SQLException {
         if (statement.execute()) {
-            ParsedResults results = new ParsedResults(statement.getResultSet());
-            return results.toTable();
+            return new DatabaseResults(statement.getResultSet());
         }
 
         return null;

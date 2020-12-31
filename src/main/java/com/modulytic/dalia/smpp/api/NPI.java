@@ -4,7 +4,9 @@ package com.modulytic.dalia.smpp.api;
  * Possible values for SMPP <a href="https://docs.aerialink.net/api/smpp/ton-npi-settings/">NPI</a>
  * @author  <a href="mailto:noah@modulytic.com">Noah Sandman</a>
  */
-public class NPI {
+public final class NPI {
+    private NPI() {}
+
     @SuppressWarnings("PMD.RedundantFieldInitializer")
     public static byte UNKNOWN = 0;
     public static byte E164 = 1;

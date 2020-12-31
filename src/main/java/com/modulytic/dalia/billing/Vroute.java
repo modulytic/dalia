@@ -1,12 +1,18 @@
 package com.modulytic.dalia.billing;
 
+import com.modulytic.dalia.app.Context;
+import com.modulytic.dalia.app.database.DatabaseResults;
+import com.modulytic.dalia.app.database.RowStore;
+import com.modulytic.dalia.app.database.include.Database;
+import com.modulytic.dalia.app.database.include.DatabaseConstants;
+
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * Represent a vRoute (virtual route) that exists for billing in Java
  * @author  <a href="mailto:noah@modulytic.com">Noah Sandman</a>
  */
-@SuppressWarnings("unused")
 public class Vroute {
     private final int id;
     private final String name;
@@ -20,8 +26,11 @@ public class Vroute {
      * </p>
      * @param rs    data returned from a DbManager fetch request
      */
-    public Vroute(Map<String, ?> rs) {
-        this((Integer) rs.get("id"), (String) rs.get("vroute_name"), (Float) rs.get("rate"), (Integer) rs.get("country_code"));
+    public Vroute(RowStore rs) {
+        this(rs.get(DatabaseConstants.VROUTE_ID),
+                rs.get(DatabaseConstants.VROUTE_NAME),
+                rs.get(DatabaseConstants.RATE),
+                rs.get(DatabaseConstants.COUNTRY_CODE));
     }
 
     /**
@@ -36,6 +45,23 @@ public class Vroute {
         this.name = name;
         this.rate = rate;
         this.countryCode = countryCode;
+    }
+
+    // get currently active vRoute for a given country code
+    public static Vroute getActiveVroute(int countryCode) {
+        Database database = Context.getDatabase();
+        if (database == null)
+            return null;
+
+        Map<String, Object> match = new ConcurrentHashMap<>();
+        match.put(DatabaseConstants.COUNTRY_CODE, countryCode);
+        match.put(DatabaseConstants.IS_ACTIVE, true);
+
+        DatabaseResults rs = database.fetch(DatabaseConstants.VROUTE_TABLE, match);
+        if (rs == null || rs.isEmpty())
+            return null;
+
+        return new Vroute(rs.row(0));
     }
 
     /**

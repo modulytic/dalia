@@ -1,23 +1,23 @@
-package com.modulytic.dalia;
+package com.modulytic.dalia.app;
 
-import com.modulytic.dalia.local.include.DbManager;
-import com.modulytic.dalia.smpp.DLRUpdateHandler;
-import com.modulytic.dalia.smpp.DaliaSmppSessionListener;
+import com.modulytic.dalia.app.database.include.Database;
+import com.modulytic.dalia.smpp.event.DLRUpdateHandler;
+import com.modulytic.dalia.smpp.event.DaliaSmppSessionListener;
 import com.modulytic.dalia.ws.WsdServer;
 
-public final class DaliaContext {
-    private DaliaContext() {}
+public final class Context {
+    private Context() {}
 
-    private static DbManager database;
+    private static Database database;
     private static DaliaSmppSessionListener sessionListener;
     private static DLRUpdateHandler updateHandler;
     private static WsdServer wsdServer;
 
-    public static void setDatabase(DbManager db) {
+    public static void setDatabase(Database db) {
         database = db;
     }
 
-    public static DbManager getDatabase() {
+    public static Database getDatabase() {
         return database;
     }
 

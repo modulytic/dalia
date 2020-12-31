@@ -1,6 +1,6 @@
-package com.modulytic.dalia.local.include;
+package com.modulytic.dalia.app.database.include;
 
-import com.google.common.collect.Table;
+import com.modulytic.dalia.app.database.DatabaseResults;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -10,10 +10,10 @@ import java.util.*;
  * Abstract class for interfacing with persistent databases
  * @author  <a href="mailto:noah@modulytic.com">Noah Sandman</a>
  */
-public abstract class DbManager {
+public abstract class Database {
     protected final transient Logger LOGGER;
 
-    public DbManager() {
+    public Database() {
         LOGGER = LoggerFactory.getLogger(this.getClass());
     }
 
@@ -23,7 +23,7 @@ public abstract class DbManager {
      * @param match Parameters to match
      * @return      List of maps, where each map is a row
      */
-    public Table<Integer, String, Object> fetch(String table, Map<String, ?> match) {
+    public DatabaseResults fetch(String table, Map<String, ?> match) {
         return fetch(table, match, null);
     }
 
@@ -49,7 +49,7 @@ public abstract class DbManager {
      * @param columns   Columns to return
      * @return          List of maps, where each map is a row
      */
-    public abstract Table<Integer, String, Object> fetch(String table, Map<String, ?> match, Set<String> columns);
+    public abstract DatabaseResults fetch(String table, Map<String, ?> match, Set<String> columns);
 
     /**
      * If connection to database needs to be manually closed, that can be implemented here

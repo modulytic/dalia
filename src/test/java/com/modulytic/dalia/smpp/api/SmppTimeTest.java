@@ -1,5 +1,6 @@
 package com.modulytic.dalia.smpp.api;
 
+import com.modulytic.dalia.smpp.internal.SmppTime;
 import org.junit.jupiter.api.Test;
 
 import java.time.LocalDateTime;

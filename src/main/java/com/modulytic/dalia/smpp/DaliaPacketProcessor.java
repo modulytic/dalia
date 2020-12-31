@@ -1,7 +1,8 @@
 package com.modulytic.dalia.smpp;
 
-import com.modulytic.dalia.Constants;
-import com.modulytic.dalia.local.Config;
+import com.modulytic.dalia.app.Constants;
+import com.modulytic.dalia.app.Filesystem;
+import com.modulytic.dalia.smpp.event.DaliaSmppRequestHandler;
 import net.gescobar.smppserver.PacketProcessor;
 import net.gescobar.smppserver.ResponseSender;
 import net.gescobar.smppserver.packet.SmppRequest;
@@ -20,7 +21,7 @@ public class DaliaPacketProcessor implements PacketProcessor {
      * Constructor
      */
     public DaliaPacketProcessor() {
-        String confPath = Config.getPrefixFile(Constants.SMPP_CONF_FILENAME);
+        String confPath = Filesystem.getPrefixFile(Constants.SMPP_CONF_FILENAME);
         JsonAuthenticator authenticator = new JsonAuthenticator(confPath);
 
         router.setAuthenticator(authenticator);

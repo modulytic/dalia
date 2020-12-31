@@ -1,8 +1,9 @@
 package com.modulytic.dalia.smpp;
 
-import com.modulytic.dalia.DaliaContext;
-import com.modulytic.dalia.local.include.DbManager;
-import com.modulytic.dalia.smpp.api.SMSCAddress;
+import com.modulytic.dalia.app.Context;
+import com.modulytic.dalia.app.database.include.Database;
+import com.modulytic.dalia.smpp.event.DaliaSmppRequestHandler;
+import com.modulytic.dalia.smpp.internal.SMSCAddress;
 import com.modulytic.dalia.smpp.request.SubmitRequest;
 import com.modulytic.dalia.ws.WsdServer;
 import com.modulytic.dalia.ws.api.WsdMessage;
@@ -14,24 +15,25 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.BeforeEach;
 import org.mockito.ArgumentCaptor;
 
-import java.util.LinkedHashMap;
+import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
 class DaliaSmppRequestHandlerTest {
     DaliaSmppRequestHandler handler;
-    DbManager database;
+    Database database;
     WsdServer server;
 
     @BeforeEach
     void setup() {
         handler = new DaliaSmppRequestHandler();
-        database = mock(DbManager.class);
+        handler.setSmppUser("smppuser");
+        database = mock(Database.class);
         server = mock(WsdServer.class);
 
-        DaliaContext.setDatabase(database);
-        DaliaContext.setWsdServer(server);
+        Context.setDatabase(database);
+        Context.setWsdServer(server);
     }
 
     @Test
@@ -98,11 +100,12 @@ class DaliaSmppRequestHandlerTest {
         SubmitRequest req = mock(SubmitRequest.class);
         when(req.getDestAddress()).thenReturn(address);
         when(req.toEndpointRequest()).thenReturn(new WsdMessage(null, null));
+        when(req.getMessageId()).thenReturn("df90ef49-a382-4c60-a5ac-806cc1be5063");
 
         ResponseSender res = mock(ResponseSender.class);
         handler.onSubmitSm(req, res);
 
-        verify(database, times(1)).fetch(anyString(), any(LinkedHashMap.class));
+        verify(database, times(1)).fetch(anyString(), any(Map.class));
         verify(server, times(1)).sendNext(any(WsdMessage.class), any(WsdStatusListener.class));
     }
 
@@ -122,7 +125,7 @@ class DaliaSmppRequestHandlerTest {
             return null;
         }).when(server).sendNext(any(WsdMessage.class), any(WsdStatusListener.class));
 
-        DaliaSmppRequestHandler handler = new DaliaSmppRequestHandler();
+        handler.setSmppUser("smppuser");
 
         SMSCAddress address = mock(SMSCAddress.class);
         when(address.getSupported()).thenReturn(true);
@@ -132,6 +135,7 @@ class DaliaSmppRequestHandlerTest {
 
         SubmitRequest req = mock(SubmitRequest.class);
         when(req.getDestAddress()).thenReturn(address);
+        when(req.getMessageId()).thenReturn("df90ef49-a382-4c60-a5ac-806cc1be5063");
 
         handler.onSubmitSm(req, res);
     }
@@ -153,7 +157,7 @@ class DaliaSmppRequestHandlerTest {
             return null;
         }).when(server).sendNext(any(WsdMessage.class), any(WsdStatusListener.class));
 
-        DaliaSmppRequestHandler handler = new DaliaSmppRequestHandler();
+        handler.setSmppUser("smppuser");
 
         SMSCAddress address = mock(SMSCAddress.class);
         when(address.getSupported()).thenReturn(true);
@@ -163,6 +167,7 @@ class DaliaSmppRequestHandlerTest {
 
         SubmitRequest req = mock(SubmitRequest.class);
         when(req.getDestAddress()).thenReturn(address);
+        when(req.getMessageId()).thenReturn("df90ef49-a382-4c60-a5ac-806cc1be5063");
 
         handler.onSubmitSm(req, res);
     }
@@ -183,8 +188,6 @@ class DaliaSmppRequestHandlerTest {
             return null;
         }).when(server).sendNext(any(WsdMessage.class), any(WsdStatusListener.class));
 
-        DaliaSmppRequestHandler handler = new DaliaSmppRequestHandler();
-
         SMSCAddress address = mock(SMSCAddress.class);
         when(address.getSupported()).thenReturn(true);
         when(address.isValidNpi()).thenReturn(true);
@@ -193,6 +196,7 @@ class DaliaSmppRequestHandlerTest {
 
         SubmitRequest req = mock(SubmitRequest.class);
         when(req.getDestAddress()).thenReturn(address);
+        when(req.getMessageId()).thenReturn("df90ef49-a382-4c60-a5ac-806cc1be5063");
 
         handler.onSubmitSm(req, res);
     }
@@ -207,8 +211,6 @@ class DaliaSmppRequestHandlerTest {
             return null;
         }).when(server).sendNext(any(WsdMessage.class), any(WsdStatusListener.class));
 
-        DaliaSmppRequestHandler handler = new DaliaSmppRequestHandler();
-
         SMSCAddress address = mock(SMSCAddress.class);
         when(address.getSupported()).thenReturn(true);
         when(address.isValidNpi()).thenReturn(true);
@@ -219,10 +221,12 @@ class DaliaSmppRequestHandlerTest {
         when(req.toEndpointRequest()).thenReturn(new WsdMessage(null, null));
         when(req.getShouldForwardDLRs()).thenReturn(true);
 
+        when(req.getMessageId()).thenReturn("df90ef49-a382-4c60-a5ac-806cc1be5063");
+
         ResponseSender res = mock(ResponseSender.class);
         handler.onSubmitSm(req, res);
-        verify(database, times(1)).fetch(anyString(), any(LinkedHashMap.class));
+        verify(database, times(1)).fetch(anyString(), any(Map.class));
         verify(server, times(1)).sendNext(any(WsdMessage.class), any(WsdStatusListener.class));
-        verify(req, times(1)).persistDLRParamsTo(any(DbManager.class));
+        verify(req, times(1)).persistDLRParamsTo(any(Database.class));
     }
 }

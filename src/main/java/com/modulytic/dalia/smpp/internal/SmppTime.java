@@ -1,4 +1,4 @@
-package com.modulytic.dalia.smpp.api;
+package com.modulytic.dalia.smpp.internal;
 
 import java.time.LocalDateTime;
 import java.time.ZoneId;

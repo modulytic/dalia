@@ -1,18 +1,17 @@
-package com.modulytic.dalia.local;
+package com.modulytic.dalia.app.database;
 
-import com.google.common.collect.Table;
-import com.modulytic.dalia.Constants;
-import com.modulytic.dalia.local.include.DbConstants;
-import com.modulytic.dalia.local.include.DbManager;
+import com.modulytic.dalia.app.Constants;
+import com.modulytic.dalia.app.database.include.Database;
+import com.modulytic.dalia.app.database.include.DatabaseConstants;
 
 import java.sql.*;
 import java.util.*;
 
 /**
- * {@link DbManager} for MySql
+ * {@link Database} for MySql
  * @author  <a href="mailto:noah@modulytic.com">Noah Sandman</a>
  */
-public class MySqlDbManager extends DbManager {
+public class MySqlDatabase extends Database {
     private transient Connection connection;
 
     /**
@@ -20,8 +19,8 @@ public class MySqlDbManager extends DbManager {
      * @param user  MySQL username
      * @param pass  MySQL password
      */
-    public MySqlDbManager(String user, String pass) {
-        this(user, pass, DbConstants.DEFAULT_NAME);
+    public MySqlDatabase(String user, String pass) {
+        this(user, pass, DatabaseConstants.DEFAULT_NAME);
     }
 
     /**
@@ -30,7 +29,7 @@ public class MySqlDbManager extends DbManager {
      * @param pass      MySQL password
      * @param database  MySQL database name
      */
-    public MySqlDbManager(String user, String pass, String database) {
+    public MySqlDatabase(String user, String pass, String database) {
         this(user, pass, database, getDefaultHost(), 3306);
     }
 
@@ -55,7 +54,7 @@ public class MySqlDbManager extends DbManager {
      * @param host      MySQL database host
      * @param port      MySQL database port
      */
-    public MySqlDbManager(String user, String pass, String database, String host, int port) {
+    public MySqlDatabase(String user, String pass, String database, String host, int port) {
         super();
 
         String url = buildConnectionUrl(user, pass, database, host, port);
@@ -71,7 +70,7 @@ public class MySqlDbManager extends DbManager {
      * Constructor used for testing
      * @param connection    Database connection object
      */
-    public MySqlDbManager(Connection connection) {
+    public MySqlDatabase(Connection connection) {
         this.connection = connection;
     }
 
@@ -122,12 +121,12 @@ public class MySqlDbManager extends DbManager {
             statement.update();
         }
         catch (SQLException throwables) {
-            LOGGER.error(throwables.getMessage());
+            LOGGER.error("SQL ERROR", throwables);
         }
     }
 
     @Override
-    public Table<Integer, String, Object> fetch(String table, Map<String, ?> matches, Set<String> columns) {
+    public DatabaseResults fetch(String table, Map<String, ?> matches, Set<String> columns) {
         StringBuilder matchStr = new StringBuilder();
         for (String match : matches.keySet()) {
             if (matchStr.length() != 0)
@@ -144,7 +143,7 @@ public class MySqlDbManager extends DbManager {
             return statement.execute();
         }
         catch (SQLException throwables) {
-            LOGGER.error(throwables.getMessage());
+            LOGGER.error("SQL ERROR", throwables);
         }
 
         return null;
@@ -175,7 +174,7 @@ public class MySqlDbManager extends DbManager {
             statement.update();
         }
         catch (SQLException throwables) {
-            LOGGER.error(throwables.getMessage());
+            LOGGER.error("SQL ERROR", throwables);
         }
     }
 
