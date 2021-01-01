@@ -2,15 +2,18 @@ package com.modulytic.dalia.smpp;
 
 import com.modulytic.dalia.app.Context;
 import com.modulytic.dalia.app.database.include.Database;
+import com.modulytic.dalia.smpp.api.RegisteredDelivery;
 import com.modulytic.dalia.smpp.event.DaliaSmppRequestHandler;
 import com.modulytic.dalia.smpp.internal.AppAddress;
-import com.modulytic.dalia.smpp.request.SubmitRequest;
+import com.modulytic.dalia.smpp.internal.PduBridge;
+import com.modulytic.dalia.ws.WsdMessageConverter;
 import com.modulytic.dalia.ws.WsdServer;
 import com.modulytic.dalia.ws.api.WsdMessage;
-import com.modulytic.dalia.ws.api.WsdMessageCode;
+import com.modulytic.dalia.ws.api.WsdResponseCode;
 import com.modulytic.dalia.ws.include.WsdStatusListener;
 import net.gescobar.smppserver.Response;
 import net.gescobar.smppserver.ResponseSender;
+import net.gescobar.smppserver.packet.SubmitSm;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.BeforeEach;
@@ -26,6 +29,10 @@ class DaliaSmppRequestHandlerTest {
     DaliaSmppRequestHandler handler;
     Database database;
     static MockedStatic<WsdServer> wsd = mockStatic(WsdServer.class);
+    static MockedStatic<WsdMessageConverter> wmc = mockStatic(WsdMessageConverter.class);
+    AppAddress address;
+    RegisteredDelivery registeredDelivery;
+    PduBridge<SubmitSm> req;
 
     @BeforeEach
     void setup() {
@@ -35,7 +42,20 @@ class DaliaSmppRequestHandlerTest {
         handler = new DaliaSmppRequestHandler();
         handler.setSmppUser("smppuser");
 
+        address = mock(AppAddress.class);
+
+        registeredDelivery = mock(RegisteredDelivery.class);
+
+        req = mock(PduBridge.class);
+        when(req.getPdu()).thenReturn(mock(SubmitSm.class));
+        when(req.getSourceAddress()).thenReturn(address);
+        when(req.getDestAddress()).thenReturn(address);
+        when(req.getRegisteredDelivery()).thenReturn(registeredDelivery);
+
         wsd.reset();
+        wmc.reset();
+        wmc.when(() -> WsdMessageConverter.toMessage(any(PduBridge.class), anyString()))
+                .thenReturn(new WsdMessage(null, null));
     }
 
     @AfterAll
@@ -45,13 +65,9 @@ class DaliaSmppRequestHandlerTest {
 
     @Test
     void submitSmUnsupportedNPI() {
-        AppAddress address = mock(AppAddress.class);
         when(address.getSupported()).thenReturn(true);
         when(address.isValidNpi()).thenReturn(false);
         when(address.isValidTon()).thenReturn(true);
-
-        SubmitRequest req = mock(SubmitRequest.class);
-        when(req.getDestAddress()).thenReturn(address);
 
         ResponseSender res = mock(ResponseSender.class);
         handler.onSubmitSm(req, res);
@@ -63,13 +79,9 @@ class DaliaSmppRequestHandlerTest {
 
     @Test
     void submitSmUnsupportedTON() {
-        AppAddress address = mock(AppAddress.class);
         when(address.getSupported()).thenReturn(true);
         when(address.isValidNpi()).thenReturn(true);
         when(address.isValidTon()).thenReturn(false);
-
-        SubmitRequest req = mock(SubmitRequest.class);
-        when(req.getDestAddress()).thenReturn(address);
 
         ResponseSender res = mock(ResponseSender.class);
         handler.onSubmitSm(req, res);
@@ -81,13 +93,9 @@ class DaliaSmppRequestHandlerTest {
 
     @Test
     void submitSmUnsupportedDestAddress() {
-        AppAddress address = mock(AppAddress.class);
         when(address.getSupported()).thenReturn(false);
         when(address.isValidNpi()).thenReturn(true);
         when(address.isValidTon()).thenReturn(true);
-
-        SubmitRequest req = mock(SubmitRequest.class);
-        when(req.getDestAddress()).thenReturn(address);
 
         ResponseSender res = mock(ResponseSender.class);
         handler.onSubmitSm(req, res);
@@ -99,15 +107,9 @@ class DaliaSmppRequestHandlerTest {
 
     @Test
     void submitSmCallsDatabaseAndWebsocket() {
-        AppAddress address = mock(AppAddress.class);
         when(address.getSupported()).thenReturn(true);
         when(address.isValidNpi()).thenReturn(true);
         when(address.isValidTon()).thenReturn(true);
-
-        SubmitRequest req = mock(SubmitRequest.class);
-        when(req.getDestAddress()).thenReturn(address);
-        when(req.toEndpointRequest()).thenReturn(new WsdMessage(null, null));
-        when(req.getMessageId()).thenReturn("df90ef49-a382-4c60-a5ac-806cc1be5063");
 
         ResponseSender res = mock(ResponseSender.class);
         handler.onSubmitSm(req, res);
@@ -124,7 +126,7 @@ class DaliaSmppRequestHandlerTest {
             .then(invocation -> {
                 Object[] args = invocation.getArguments();
                 WsdStatusListener listener = (WsdStatusListener) args[1];
-                listener.onStatus(WsdMessageCode.NO_CLIENTS);
+                listener.onStatus(WsdResponseCode.NO_CLIENTS);
 
                 ArgumentCaptor<Response> argument = ArgumentCaptor.forClass(Response.class);
                 verify(res).send(argument.capture());
@@ -133,15 +135,10 @@ class DaliaSmppRequestHandlerTest {
                 return null;
             });
 
-        AppAddress address = mock(AppAddress.class);
         when(address.getSupported()).thenReturn(true);
         when(address.isValidNpi()).thenReturn(true);
         when(address.isValidTon()).thenReturn(true);
         when(address.getCountryCode()).thenReturn(1);
-
-        SubmitRequest req = mock(SubmitRequest.class);
-        when(req.getDestAddress()).thenReturn(address);
-        when(req.getMessageId()).thenReturn("df90ef49-a382-4c60-a5ac-806cc1be5063");
 
         handler.onSubmitSm(req, res);
     }
@@ -163,15 +160,10 @@ class DaliaSmppRequestHandlerTest {
                 return null;
             });
 
-        AppAddress address = mock(AppAddress.class);
         when(address.getSupported()).thenReturn(true);
         when(address.isValidNpi()).thenReturn(true);
         when(address.isValidTon()).thenReturn(true);
         when(address.getCountryCode()).thenReturn(1);
-
-        SubmitRequest req = mock(SubmitRequest.class);
-        when(req.getDestAddress()).thenReturn(address);
-        when(req.getMessageId()).thenReturn("df90ef49-a382-4c60-a5ac-806cc1be5063");
 
         handler.onSubmitSm(req, res);
     }
@@ -184,7 +176,7 @@ class DaliaSmppRequestHandlerTest {
             .then(invocation -> {
                 Object[] args = invocation.getArguments();
                 WsdStatusListener listener = (WsdStatusListener) args[1];
-                listener.onStatus(WsdMessageCode.SUCCESS);       // random non-success code
+                listener.onStatus(WsdResponseCode.SUCCESS);       // random non-success code
 
                 ArgumentCaptor<Response> argument = ArgumentCaptor.forClass(Response.class);
                 verify(res).send(argument.capture());
@@ -193,15 +185,12 @@ class DaliaSmppRequestHandlerTest {
                 return null;
             });
 
-        AppAddress address = mock(AppAddress.class);
         when(address.getSupported()).thenReturn(true);
         when(address.isValidNpi()).thenReturn(true);
         when(address.isValidTon()).thenReturn(true);
         when(address.getCountryCode()).thenReturn(1);
 
-        SubmitRequest req = mock(SubmitRequest.class);
-        when(req.getDestAddress()).thenReturn(address);
-        when(req.getMessageId()).thenReturn("df90ef49-a382-4c60-a5ac-806cc1be5063");
+        when(registeredDelivery.getForwardDlrs()).thenReturn(true);
 
         handler.onSubmitSm(req, res);
     }
@@ -213,26 +202,20 @@ class DaliaSmppRequestHandlerTest {
             .then(invocation -> {
                 Object[] args = invocation.getArguments();
                 WsdStatusListener listener = (WsdStatusListener) args[1];
-                listener.onStatus(WsdMessageCode.SUCCESS);
+                listener.onStatus(WsdResponseCode.SUCCESS);
                 return null;
             });
 
-        AppAddress address = mock(AppAddress.class);
         when(address.getSupported()).thenReturn(true);
         when(address.isValidNpi()).thenReturn(true);
         when(address.isValidTon()).thenReturn(true);
 
-        SubmitRequest req = mock(SubmitRequest.class);
-        when(req.getDestAddress()).thenReturn(address);
-        when(req.toEndpointRequest()).thenReturn(new WsdMessage(null, null));
-        when(req.getShouldForwardDLRs()).thenReturn(true);
-
-        when(req.getMessageId()).thenReturn("df90ef49-a382-4c60-a5ac-806cc1be5063");
+        when(registeredDelivery.getForwardDlrs()).thenReturn(true);
 
         ResponseSender res = mock(ResponseSender.class);
         handler.onSubmitSm(req, res);
         verify(database, times(1)).fetch(anyString(), any(Map.class));
-        verify(req, times(1)).persistDLRParamsTo(any(Database.class));
+        verify(database, times(2)).insert(anyString(), any(Map.class));
 
         wsd.verify(() -> WsdServer.sendNext(any(WsdMessage.class), any(WsdStatusListener.class)));
     }

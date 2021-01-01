@@ -1,4 +1,4 @@
-package com.modulytic.dalia.smpp.request;
+package com.modulytic.dalia.smpp.internal;
 
 import com.modulytic.dalia.app.Context;
 import com.modulytic.dalia.app.database.DatabaseResults;

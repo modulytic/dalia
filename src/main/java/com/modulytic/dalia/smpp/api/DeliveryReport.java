@@ -10,7 +10,6 @@ import java.time.LocalDateTime;
  * Class to build DLR PDU easily from raw Java data
  * @author  <a href="mailto:noah@modulytic.com">Noah Sandman</a>
  */
-@SuppressWarnings("unused")
 public class DeliveryReport {
     /**
      * deliver_sm PDU that can be sent

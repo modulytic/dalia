@@ -3,7 +3,7 @@ package com.modulytic.dalia.ws;
 import com.google.gson.Gson;
 import com.modulytic.dalia.app.Constants;
 import com.modulytic.dalia.ws.api.WsdMessage;
-import com.modulytic.dalia.ws.api.WsdMessageCode;
+import com.modulytic.dalia.ws.api.WsdResponseCode;
 import com.modulytic.dalia.ws.include.WsdStatusListener;
 import org.java_websocket.WebSocket;
 import org.java_websocket.handshake.ClientHandshake;
@@ -156,7 +156,7 @@ public class WsdServer extends WebSocketServer {
         }
         catch (IndexOutOfBoundsException e) {
             // we have tested if activeIndex is greater than size, so this can only happen if size is actually 0
-            listener.onStatus(WsdMessageCode.NO_CLIENTS);
+            listener.onStatus(WsdResponseCode.NO_CLIENTS);
         }
     }
 }

@@ -1,7 +1,7 @@
 package com.modulytic.dalia.smpp.include;
 
 import com.modulytic.dalia.smpp.event.DaliaSmppSessionListener;
-import com.modulytic.dalia.smpp.request.SubmitRequest;
+import com.modulytic.dalia.smpp.internal.PduBridge;
 import net.gescobar.smppserver.PacketProcessor;
 import net.gescobar.smppserver.Response;
 import net.gescobar.smppserver.ResponseSender;
@@ -57,7 +57,7 @@ public abstract class SmppRequestHandler implements PacketProcessor {
         switch (req.getCommandId()) {
             case SmppPacket.BIND_TRANSMITTER:
             case SmppPacket.BIND_RECEIVER:
-            case SmppPacket.BIND_TRANSCEIVER:
+            case SmppPacket.BIND_TRANSCEIVER: {
                 Bind b = (Bind) req;
                 String sysId = b.getSystemId();
 
@@ -67,41 +67,52 @@ public abstract class SmppRequestHandler implements PacketProcessor {
                 }
 
                 break;
+            }
 
-            case SmppPacket.UNBIND:
+            case SmppPacket.UNBIND: {
                 this.onUnbind(res);
                 break;
+            }
 
-            case SmppPacket.SUBMIT_SM:
-                SubmitRequest submitRequest = new SubmitRequest((SubmitSm) req);
-                submitRequest.setSmppUser(getSmppUser());
-
-                this.onSubmitSm(submitRequest, res);
+            case SmppPacket.SUBMIT_SM: {
+                PduBridge<SubmitSm> pduBridge = new PduBridge<>((SubmitSm) req);
+                this.onSubmitSm(pduBridge, res);
                 break;
+            }
 
-            case SmppPacket.ENQUIRE_LINK:
+            case SmppPacket.ENQUIRE_LINK: {
                 onEnquireLink(res);
                 break;
+            }
 
-            case SmppPacket.CANCEL_SM:
-                this.onCancelSm(req, res);
+            case SmppPacket.CANCEL_SM: {
+                PduBridge<CancelSm> pduBridge = new PduBridge<>((CancelSm) req);
+                this.onCancelSm(pduBridge, res);
                 break;
+            }
 
-            case SmppPacket.QUERY_SM:
-                this.onQuerySm(req, res);
+            case SmppPacket.QUERY_SM: {
+                PduBridge<QuerySm> pduBridge = new PduBridge<>((QuerySm) req);
+                this.onQuerySm(pduBridge, res);
                 break;
+            }
 
-            case SmppPacket.REPLACE_SM:
-                this.onReplaceSm(req, res);
+            case SmppPacket.REPLACE_SM: {
+                PduBridge<ReplaceSm> pduBridge = new PduBridge<>((ReplaceSm) req);
+                this.onReplaceSm(pduBridge, res);
                 break;
+            }
 
-            case SmppPacket.SUBMIT_MULTI:
-                this.onSubmitMulti(req, res);
+            case SmppPacket.SUBMIT_MULTI: {
+                PduBridge<SubmitMulti> pduBridge = new PduBridge<>((SubmitMulti) req);
+                this.onSubmitMulti(pduBridge, res);
                 break;
+            }
 
-            default:
+            default: {
                 res.send(Response.INVALID_COMMAND_ID);
                 break;
+            }
         }
     }
 
@@ -129,29 +140,29 @@ public abstract class SmppRequestHandler implements PacketProcessor {
      * Handle submit_sm PDU
      * @param submitSm  submit_sm PDU
      */
-    public abstract void onSubmitSm(SubmitRequest submitSm, ResponseSender responseSender);
+    public abstract void onSubmitSm(PduBridge<SubmitSm> submitSm, ResponseSender responseSender);
 
     /**
      * Handle cancel_sm PDU
      * @param cancelSm  cancel_sm PDU
      */
-    public abstract void onCancelSm(SmppRequest cancelSm, ResponseSender responseSender);
+    public abstract void onCancelSm(PduBridge<CancelSm> cancelSm, ResponseSender responseSender);
 
     /**
      * Handle query_sm PDU
      * @param querySm  query_sm PDU
      */
-    public abstract void onQuerySm(SmppRequest querySm, ResponseSender responseSender);
+    public abstract void onQuerySm(PduBridge<QuerySm> querySm, ResponseSender responseSender);
 
     /**
      * Handle replace_sm PDU
      * @param replaceSm  replace_sm PDU
      */
-    public abstract void onReplaceSm(SmppRequest replaceSm, ResponseSender responseSender);
+    public abstract void onReplaceSm(PduBridge<ReplaceSm> replaceSm, ResponseSender responseSender);
 
     /**
      * Handle submit_multi PDU
      * @param submitMulti  submit_multi PDU
      */
-    public abstract void onSubmitMulti(SmppRequest submitMulti, ResponseSender responseSender);
+    public abstract void onSubmitMulti(PduBridge<SubmitMulti> submitMulti, ResponseSender responseSender);
 }

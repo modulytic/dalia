@@ -27,7 +27,7 @@ final class WsdMessageHandler {
                 String statusRaw    = (String) params.get("new_status");
                 MessageState status = MessageState.fromCode(statusRaw);
 
-                DLRUpdateHandler.updateStatus(id, status);
+                DLRUpdateHandler.update(id, status);
                 break;
             }
 

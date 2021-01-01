@@ -3,6 +3,7 @@ package com.modulytic.dalia.smpp;
 import com.modulytic.dalia.app.Constants;
 import net.gescobar.smppserver.SmppException;
 import net.gescobar.smppserver.SmppSession;
+import net.gescobar.smppserver.packet.SmppPacket;
 import net.gescobar.smppserver.packet.SmppRequest;
 import net.gescobar.smppserver.packet.SmppResponse;
 import org.slf4j.Logger;
@@ -19,35 +20,28 @@ public final class DaliaSessionBridge {
         session = sess;
     }
 
-    /**
-     * Send PDU to connected ESME, with {@link Constants#SMPP_REQUEST_TIMEOUT default timeout}
-     * @param request   {@link SmppRequest request}
-     * @return          response if received, otherwise null
-     */
-    public SmppResponse sendGescobarPdu(SmppRequest request) {
-        return sendGescobarPdu(request, Constants.SMPP_REQUEST_TIMEOUT);
-    }
-
-    /**
-     * Send PDU to connected ESME
-     * @param request   {@link SmppRequest request}
-     * @param timeout   timeout (millis)
-     * @return          response if received, otherwise null
-     */
-    public SmppResponse sendGescobarPdu(SmppRequest request, long timeout) {
-        if (session.isBound()) {
-            try {
-                return session.sendRequest(request, timeout);
-            }
-            catch (SmppException e) {
-                LOGGER.error(e.getMessage());
-            }
+    public SmppResponse sendPdu(SmppRequest request) {
+        try {
+            if (session.isBound())
+                return routePdu(request);
+        }
+        catch (SmppException e) {
+            LOGGER.error("SMPP error", e);
         }
 
         return null;
     }
 
-    // TODO implement this with query_sm_resp, cancel_sm_resp, replace_sm_resp
-    public void sendDaliaPdu() {
+    // TODO add support for other types of PDUs
+    private SmppResponse routePdu(SmppRequest request) {
+        switch (request.getCommandId()) {
+            case SmppPacket.DELIVER_SM:
+            case SmppPacket.ENQUIRE_LINK:
+            case SmppPacket.UNBIND:
+                return session.sendRequest(request, Constants.SMPP_REQUEST_TIMEOUT);
+
+            default:
+                return null;
+        }
     }
 }
