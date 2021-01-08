@@ -86,6 +86,7 @@ public class WsdServer extends WebSocketServer {
 
         if ("&cmd".equals(wsdMessage.getName())) {
             if ("STATUS".equals(params.get("code"))) {
+                @SuppressWarnings("unchecked")
                 Map<String, ?> data = (Map<String, ?>) params.get("data");
 
                 final String id = (String) data.get("id");
@@ -124,7 +125,7 @@ public class WsdServer extends WebSocketServer {
      * @param message   message to send
      */
     @SuppressWarnings("unused")
-    public static void sendCurrent(WsdMessage message, WsdStatusListener listener) {
+    public static void sendToCurrentEndpoint(WsdMessage message, WsdStatusListener listener) {
         send(message, listener, false);
     }
 
@@ -132,7 +133,7 @@ public class WsdServer extends WebSocketServer {
      * Send message to client, and advance round-robin load distributor
      * @param message   message to send
      */
-    public static void sendNext(WsdMessage message, WsdStatusListener listener) {
+    public static void sendToNextEndpoint(WsdMessage message, WsdStatusListener listener) {
         send(message, listener,true);
     }
 

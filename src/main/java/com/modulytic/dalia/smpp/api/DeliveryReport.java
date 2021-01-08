@@ -1,9 +1,12 @@
 package com.modulytic.dalia.smpp.api;
 
 import com.modulytic.dalia.smpp.internal.SmppTime;
+import net.gescobar.smppserver.Response;
 import net.gescobar.smppserver.packet.Address;
 import net.gescobar.smppserver.packet.DeliverSm;
+import net.gescobar.smppserver.packet.Tlv;
 
+import java.nio.charset.StandardCharsets;
 import java.time.LocalDateTime;
 
 /**
@@ -39,7 +42,7 @@ public class DeliveryReport {
     /**
      * Error code, if any encountered. Default: 0
      */
-    private int error;
+    private byte error;
 
     public DeliveryReport() {
         this.deliverSm = new DeliverSm();
@@ -114,7 +117,7 @@ public class DeliveryReport {
      * @param error integer SMPP error code
      */
     public void setError(int error) {
-        this.error = error;
+        this.error = (byte) error;
     }
 
     /**
@@ -130,6 +133,7 @@ public class DeliveryReport {
      * @return  {@link DeliverSm} PDU
      */
     public DeliverSm toDeliverSm() {
+        // Set the short message with all our data
         String sm = String.format("id:%s submit date:%s done date:%s stat:%s err:%d",
                                         this.id,
                                         SmppTime.formatAbsolute(this.submitDate),
@@ -137,6 +141,22 @@ public class DeliveryReport {
                                         this.status.toString(),
                                         this.error);
         this.deliverSm.setShortMessage(sm.getBytes());
+
+        // Make sure the PDU's status is marked as OK
+        this.deliverSm.setCommandStatus(Response.OK.getCommandStatus());
+
+        // Now set it in optional parameters, too
+        // encode message_state parameter
+        Tlv state = new Tlv(Tlv.MESSAGE_STATE, new byte[]{this.status.toSmpp()}, "message_state");
+        this.deliverSm.addOptionalParameter(state);
+
+        // encode message ID in receipted_message_id
+        Tlv id = new Tlv(Tlv.RECEIPTED_MESSAGE_ID, this.id.getBytes(StandardCharsets.ISO_8859_1), "receipted_message_id");
+        this.deliverSm.addOptionalParameter(id);
+
+        // encode network error code as network_error_code
+        Tlv error = new Tlv(Tlv.NETWORK_ERROR_CODE, new byte[]{this.error}, "network_error_code");
+        this.deliverSm.addOptionalParameter(error);
 
         return this.deliverSm;
     }

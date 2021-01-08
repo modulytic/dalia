@@ -1,5 +1,6 @@
 package com.modulytic.dalia.smpp.include;
 
+import com.modulytic.dalia.smpp.DaliaSessionBridge;
 import com.modulytic.dalia.smpp.event.DaliaSmppSessionListener;
 import com.modulytic.dalia.smpp.internal.PduBridge;
 import net.gescobar.smppserver.PacketProcessor;
@@ -16,6 +17,8 @@ import org.slf4j.LoggerFactory;
 public abstract class SmppRequestHandler implements PacketProcessor {
     private static SmppAuthenticator authenticator;
     private String smppUser;
+
+    private DaliaSessionBridge bridge;
 
     protected static final Logger LOGGER = LoggerFactory.getLogger(SmppRequestHandler.class);
 
@@ -64,6 +67,7 @@ public abstract class SmppRequestHandler implements PacketProcessor {
                 if (authBind(b, res)) {
                     setSmppUser(sysId);
                     DaliaSmppSessionListener.activate(sysId);
+                    this.bridge = DaliaSmppSessionListener.getSessionBridge(sysId);
                 }
 
                 break;
@@ -165,4 +169,9 @@ public abstract class SmppRequestHandler implements PacketProcessor {
      * @param submitMulti  submit_multi PDU
      */
     public abstract void onSubmitMulti(PduBridge<SubmitMulti> submitMulti, ResponseSender responseSender);
+
+    protected void sendPdu(SmppRequest pdu) {
+        if (this.bridge != null)
+            this.bridge.sendPdu(pdu);
+    }
 }

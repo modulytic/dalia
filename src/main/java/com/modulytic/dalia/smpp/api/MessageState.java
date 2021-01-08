@@ -8,20 +8,30 @@ import java.util.concurrent.ConcurrentHashMap;
  * @author  <a href="mailto:noah@modulytic.com">Noah Sandman</a>
  */
 public enum MessageState {
-    ACCEPTED("ACCEPTD"),
-    UNDELIVERABLE("UNDELIV"),
-    REJECTED("REJECTD"),
-    DELIVERED("DELIVRD"),
-    EXPIRED("EXPIRED"),
-    DELETED("DELETED"),
-    EN_ROUTE("ENROUTE"),
-    UNKNOWN("UNKNOWN");
+    ENROUTE(1),
+    DELIVERED(2),
+    EXPIRED(3),
+    DELETED(4),
+    UNDELIVERABLE(5),
+    ACCEPTED(6),
+    UNKNOWN(7),
+    REJECTED(8);
 
     private static final Map<String, MessageState> values = new ConcurrentHashMap<>();
+    private static final String[] names = {
+        "ENROUTE",
+        "DELIVRD",
+        "EXPIRED",
+        "DELETED",
+        "UNDELIV",
+        "ACCEPTD",
+        "UNKNOWN",
+        "REJECTD"
+    };
 
-    final private String state;
-    MessageState(String state) {
-        this.state = state;
+    private final byte state;
+    MessageState(int state) {
+        this.state = (byte) state;
     }
 
     /**
@@ -31,7 +41,7 @@ public enum MessageState {
      */
     public static boolean isFinal(MessageState status) {
         return !(status.equals(ACCEPTED)
-                    || status.equals(EN_ROUTE)
+                    || status.equals(ENROUTE)
                     || status.equals(UNKNOWN));
     }
 
@@ -48,7 +58,11 @@ public enum MessageState {
 
     @Override
     public String toString() {
-        return this.state;
+        return names[this.state - 1];
+    }
+
+    public byte toSmpp() {
+        return state;
     }
 
     public static MessageState fromCode(String code) {

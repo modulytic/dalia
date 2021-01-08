@@ -6,7 +6,6 @@ import com.modulytic.dalia.smpp.api.RegisteredDelivery;
 import com.modulytic.dalia.smpp.event.DaliaSmppRequestHandler;
 import com.modulytic.dalia.smpp.internal.AppAddress;
 import com.modulytic.dalia.smpp.internal.PduBridge;
-import com.modulytic.dalia.ws.WsdMessageConverter;
 import com.modulytic.dalia.ws.WsdServer;
 import com.modulytic.dalia.ws.api.WsdMessage;
 import com.modulytic.dalia.ws.api.WsdResponseCode;
@@ -20,6 +19,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.mockito.ArgumentCaptor;
 import org.mockito.MockedStatic;
 
+import java.util.List;
 import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -29,7 +29,7 @@ class DaliaSmppRequestHandlerTest {
     DaliaSmppRequestHandler handler;
     Database database;
     static MockedStatic<WsdServer> wsd = mockStatic(WsdServer.class);
-    static MockedStatic<WsdMessageConverter> wmc = mockStatic(WsdMessageConverter.class);
+    static MockedStatic<WsdMessage> wmc = mockStatic(WsdMessage.class);
     AppAddress address;
     RegisteredDelivery registeredDelivery;
     PduBridge<SubmitSm> req;
@@ -54,7 +54,7 @@ class DaliaSmppRequestHandlerTest {
 
         wsd.reset();
         wmc.reset();
-        wmc.when(() -> WsdMessageConverter.toMessage(any(PduBridge.class), anyString()))
+        wmc.when(() -> WsdMessage.fromSubmitPdu(any(PduBridge.class), any(List.class), anyString()))
                 .thenReturn(new WsdMessage(null, null));
     }
 
@@ -115,14 +115,14 @@ class DaliaSmppRequestHandlerTest {
         handler.onSubmitSm(req, res);
 
         verify(database, times(1)).fetch(anyString(), any(Map.class));
-        wsd.verify(() -> WsdServer.sendNext(any(WsdMessage.class), any(WsdStatusListener.class)));
+        wsd.verify(() -> WsdServer.sendToNextEndpoint(any(WsdMessage.class), any(WsdStatusListener.class)));
     }
 
     @Test
     void submitSmReturnsNoClientsError() {
         ResponseSender res = mock(ResponseSender.class);
 
-        wsd.when(() -> WsdServer.sendNext(any(WsdMessage.class), any(WsdStatusListener.class)))
+        wsd.when(() -> WsdServer.sendToNextEndpoint(any(WsdMessage.class), any(WsdStatusListener.class)))
             .then(invocation -> {
                 Object[] args = invocation.getArguments();
                 WsdStatusListener listener = (WsdStatusListener) args[1];
@@ -147,7 +147,7 @@ class DaliaSmppRequestHandlerTest {
     void submitSmReturnsSendError() {
         ResponseSender res = mock(ResponseSender.class);
 
-        wsd.when(() -> WsdServer.sendNext(any(WsdMessage.class), any(WsdStatusListener.class)))
+        wsd.when(() -> WsdServer.sendToNextEndpoint(any(WsdMessage.class), any(WsdStatusListener.class)))
             .then(invocation -> {
                 Object[] args = invocation.getArguments();
                 WsdStatusListener listener = (WsdStatusListener) args[1];
@@ -172,7 +172,7 @@ class DaliaSmppRequestHandlerTest {
     void submitSmReturnsSuccessOnWsDaemonSuccess() {
         ResponseSender res = mock(ResponseSender.class);
 
-        wsd.when(() -> WsdServer.sendNext(any(WsdMessage.class), any(WsdStatusListener.class)))
+        wsd.when(() -> WsdServer.sendToNextEndpoint(any(WsdMessage.class), any(WsdStatusListener.class)))
             .then(invocation -> {
                 Object[] args = invocation.getArguments();
                 WsdStatusListener listener = (WsdStatusListener) args[1];
@@ -198,7 +198,7 @@ class DaliaSmppRequestHandlerTest {
     @Test
     void submitSmCanPersistDlrToDatabase() {
         // tell Dalia message was sent successfully
-        wsd.when(() -> WsdServer.sendNext(any(WsdMessage.class), any(WsdStatusListener.class)))
+        wsd.when(() -> WsdServer.sendToNextEndpoint(any(WsdMessage.class), any(WsdStatusListener.class)))
             .then(invocation -> {
                 Object[] args = invocation.getArguments();
                 WsdStatusListener listener = (WsdStatusListener) args[1];
@@ -217,6 +217,6 @@ class DaliaSmppRequestHandlerTest {
         verify(database, times(1)).fetch(anyString(), any(Map.class));
         verify(database, times(2)).insert(anyString(), any(Map.class));
 
-        wsd.verify(() -> WsdServer.sendNext(any(WsdMessage.class), any(WsdStatusListener.class)));
+        wsd.verify(() -> WsdServer.sendToNextEndpoint(any(WsdMessage.class), any(WsdStatusListener.class)));
     }
 }

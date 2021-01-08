@@ -17,7 +17,7 @@ class MessageStateTest {
     @Test
     void allIntermediateStatesAreNotFinal() {
         assertFalse(MessageState.isFinal(MessageState.ACCEPTED));
-        assertFalse(MessageState.isFinal(MessageState.EN_ROUTE));
+        assertFalse(MessageState.isFinal(MessageState.ENROUTE));
         assertFalse(MessageState.isFinal(MessageState.UNKNOWN));
     }
 
@@ -31,7 +31,7 @@ class MessageStateTest {
     @Test
     void allOkayStatesAreNotErrors() {
         assertFalse(MessageState.isError(MessageState.DELIVERED));
-        assertFalse(MessageState.isError(MessageState.EN_ROUTE));
+        assertFalse(MessageState.isError(MessageState.ENROUTE));
         assertFalse(MessageState.isError(MessageState.ACCEPTED));
         assertFalse(MessageState.isError(MessageState.UNKNOWN));
         assertFalse(MessageState.isError(MessageState.DELETED));
@@ -50,7 +50,7 @@ class MessageStateTest {
         assertEquals(MessageState.ACCEPTED.toString(),      "ACCEPTD");
         assertEquals(MessageState.DELETED.toString(),       "DELETED");
         assertEquals(MessageState.DELIVERED.toString(),     "DELIVRD");
-        assertEquals(MessageState.EN_ROUTE.toString(),      "ENROUTE");
+        assertEquals(MessageState.ENROUTE.toString(),       "ENROUTE");
         assertEquals(MessageState.EXPIRED.toString(),       "EXPIRED");
         assertEquals(MessageState.REJECTED.toString(),      "REJECTD");
         assertEquals(MessageState.UNDELIVERABLE.toString(), "UNDELIV");
@@ -62,7 +62,7 @@ class MessageStateTest {
         assertEquals(MessageState.ACCEPTED,      MessageState.fromCode("ACCEPTD"));
         assertEquals(MessageState.DELETED,       MessageState.fromCode("DELETED"));
         assertEquals(MessageState.DELIVERED,     MessageState.fromCode("DELIVRD"));
-        assertEquals(MessageState.EN_ROUTE,      MessageState.fromCode("ENROUTE"));
+        assertEquals(MessageState.ENROUTE,       MessageState.fromCode("ENROUTE"));
         assertEquals(MessageState.EXPIRED,       MessageState.fromCode("EXPIRED"));
         assertEquals(MessageState.REJECTED,      MessageState.fromCode("REJECTD"));
         assertEquals(MessageState.UNDELIVERABLE, MessageState.fromCode("UNDELIV"));

@@ -15,13 +15,16 @@ CREATE TABLE IF NOT EXISTS dlr_status
     dst_addr     VARCHAR(16)                           NOT NULL,
     msg_status   VARCHAR(16)                           NULL,
     submit_date  TIMESTAMP   DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    update_date  TIMESTAMP   DEFAULT CURRENT_TIMESTAMP NOT NULL,
     failure_only BOOLEAN     DEFAULT FALSE             NULL,
     intermediate BOOLEAN     DEFAULT FALSE             NULL,
     smpp_user    VARCHAR(36)                           NOT NULL,
 
-    CONSTRAINT   dlr_status_msg_id_uindex unique      (msg_id),
-    PRIMARY KEY (msg_id)
+    UNIQUE (msg_id, src_addr),
+    PRIMARY KEY (msg_id, src_addr)
 );
+CREATE TRIGGER update_dlr BEFORE UPDATE ON dlr_status FOR EACH ROW
+    SET update_date = CURRENT_TIMESTAMP;
 
 -- Table to store log of all sent messages for billing purposes
 CREATE TABLE IF NOT EXISTS billing_logs

@@ -27,6 +27,7 @@ public final class DatabaseConstants {
     public static final String FAILURE_ONLY = "failure_only";
     public static final String INTERMEDIATE = "intermediate";
     public static final String SUBMIT_DATE  = "submit_date";
+    public static final String UPDATE_DATE  = "update_date";
     public static final String SOURCE_ADDR  = "src_addr";
     public static final String DEST_ADDR    = "dst_addr";
 

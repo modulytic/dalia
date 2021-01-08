@@ -10,6 +10,7 @@ import com.modulytic.dalia.smpp.event.DaliaSmppSessionListener;
 import com.modulytic.dalia.smpp.api.DeliveryReport;
 import com.modulytic.dalia.smpp.api.MessageState;
 
+import java.time.LocalDateTime;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -102,7 +103,23 @@ public class DLRRequest {
         if (this.values == null)
             return null;
 
-        return DaliaSmppSessionListener.getSessionBridge(this.values.get(DatabaseConstants.SMPP_USER));
+        return DaliaSmppSessionListener.getSessionBridge(getSmppUser());
+    }
+
+    public String getSmppUser() {
+        return this.values.get(DatabaseConstants.SMPP_USER);
+    }
+
+    public MessageState getMessageState() {
+       return this.values.get(DatabaseConstants.MSG_STATUS);
+    }
+
+    public LocalDateTime getUpdateTime() {
+        return this.values.get(DatabaseConstants.UPDATE_DATE);
+    }
+
+    public String getSourceAddress() {
+        return this.values.get(DatabaseConstants.SOURCE_ADDR);
     }
 
     /**

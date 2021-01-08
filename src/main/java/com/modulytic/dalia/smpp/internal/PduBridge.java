@@ -4,8 +4,11 @@ import com.modulytic.dalia.smpp.api.RegisteredDelivery;
 import net.gescobar.smppserver.packet.Address;
 import net.gescobar.smppserver.packet.SmppRequest;
 
+import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.util.ArrayList;
+import java.util.List;
 
 public final class PduBridge<T extends SmppRequest> {
     private final T pdu;
@@ -19,6 +22,9 @@ public final class PduBridge<T extends SmppRequest> {
     private boolean registeredDeliverySet;
     private RegisteredDelivery registeredDelivery;
 
+    private boolean destAddressesSet;
+    private final List<AppAddress> destAddresses = new ArrayList<>();
+
     public PduBridge(T pdu) {
         this.pdu = pdu;
     }
@@ -28,29 +34,21 @@ public final class PduBridge<T extends SmppRequest> {
     }
 
     /**
-     * Call getter "method" on "pdu", expect class "from" (or primitive version), and pass to new "to" constructor
+     * Call a getter on a PDU object and create a new object of type S with result as a constructor argument
      * @param pdu       PDU to get field from
-     * @param method    method to call on PDU
-     * @param from      return class of method
+     * @param methodName    method to call on PDU
      * @param to        class of object to instantiate with returned value
      * @param <S>       type of to
-     * @param <U>       type of from
      * @return          new object, or null if an error occurred
      */
-    private static <S, U> S convertField(SmppRequest pdu, String method, Class<U> from, Class<S> to) {
+    private static <S> S convertField(SmppRequest pdu, String methodName, Class<S> to) {
         try {
-            Method m = pdu.getClass().getMethod(method);
-            Class<?> returnType = m.getReturnType();
+            Class<? extends SmppRequest> pduClass = pdu.getClass();
 
-            // if the return type is primitive, assume from is the object version of that type
-            // perform the first step so that we know we actually got the primitive we were expecting
-            if (returnType.isPrimitive()) {
-                U originalResult = from.getConstructor(returnType).newInstance(m.invoke(pdu));
-                return to.getConstructor(returnType).newInstance(originalResult);
-            }
-            else if (from.isAssignableFrom(returnType)) {
-                return to.getConstructor(from).newInstance(m.invoke(pdu));
-            }
+            Method pduMethod = pduClass.getMethod(methodName);
+            Constructor<S> constructor = to.getConstructor(pduMethod.getReturnType());
+
+            return constructor.newInstance(pduMethod.invoke(pdu));
         }
         catch (NoSuchMethodException
                     | IllegalAccessException
@@ -62,7 +60,7 @@ public final class PduBridge<T extends SmppRequest> {
 
     public AppAddress getSourceAddress() {
         if (!sourceAddressSet) {
-            sourceAddress = convertField(pdu, "getSourceAddress", Address.class, AppAddress.class);
+            sourceAddress = convertField(pdu, "getSourceAddress", AppAddress.class);
             sourceAddressSet = true;
         }
 
@@ -71,16 +69,33 @@ public final class PduBridge<T extends SmppRequest> {
 
     public AppAddress getDestAddress() {
         if (!destAddressSet) {
-            destAddress = convertField(pdu, "getDestAddress", Address.class, AppAddress.class);
+            destAddress = convertField(pdu, "getDestAddress", AppAddress.class);
             destAddressSet = true;
         }
 
         return destAddress;
     }
 
+    @SuppressWarnings({"unchecked", "PMD.AvoidInstantiatingObjectsInLoops"})
+    public List<AppAddress> getDestAddresses() {
+        if (!destAddressesSet) {
+            List<Address> gescobarAddresses = convertField(pdu, "getDestAddresses", List.class);
+
+            if (gescobarAddresses != null) {
+                for (Address address : gescobarAddresses) {
+                    destAddresses.add(new AppAddress(address));
+                }
+            }
+
+            destAddressesSet = true;
+        }
+
+        return destAddresses;
+    }
+
     public RegisteredDelivery getRegisteredDelivery() {
         if (!registeredDeliverySet) {
-            registeredDelivery = convertField(pdu, "getRegisteredDelivery", Byte.class, RegisteredDelivery.class);
+            registeredDelivery = convertField(pdu, "getRegisteredDelivery", RegisteredDelivery.class);
             registeredDeliverySet = true;
         }
 

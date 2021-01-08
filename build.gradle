@@ -28,7 +28,7 @@ test {
 
 dependencies {
     testImplementation 'org.junit.jupiter:junit-jupiter:5.7.0'
-    testImplementation 'org.mockito:mockito-inline:3.6.28'
+    testImplementation 'org.mockito:mockito-inline:3.7.0'
     testImplementation 'com.google.guava:guava:30.1-jre'
 
     implementation fileTree(include: ['*.jar'], dir: 'libs')
